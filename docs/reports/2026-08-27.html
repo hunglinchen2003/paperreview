@@ -39,33 +39,450 @@
     <main class="max-w-5xl mx-auto px-4 py-8">
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 md:p-10 mb-8">
             <div class="prose max-w-none">
-                <p>In Bash you don’t need the <code>-</code> operator to build a list of numbers – you can let the shell do it for you.<br />
-The most common and “Bash‑ish” ways are:</p>
-<div class="codehilite"><pre><span></span><code><span class="c1"># 1. Brace expansion (fast, no external command)</span>
-<span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">1</span>..10<span class="o">}</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
-<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$i</span><span class="s2">&quot;</span>
-<span class="k">done</span>
-
-<span class="c1"># 2. C‑style arithmetic loop (more flexible, works with variables)</span>
-<span class="k">for</span><span class="w"> </span><span class="o">((</span><span class="nv">i</span><span class="o">=</span><span class="m">1</span><span class="p">;</span><span class="w"> </span>i&lt;<span class="o">=</span><span class="m">10</span><span class="p">;</span><span class="w"> </span>i++<span class="o">))</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
-<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$i</span><span class="s2">&quot;</span>
-<span class="k">done</span>
-</code></pre></div>
-
-<p>If you need to use the <code>-</code> operator inside the loop (e.g., to get the previous value), just do it in the arithmetic expansion:</p>
-<div class="codehilite"><pre><span></span><code><span class="k">for</span><span class="w"> </span><span class="o">((</span><span class="nv">i</span><span class="o">=</span><span class="m">1</span><span class="p">;</span><span class="w"> </span>i&lt;<span class="o">=</span><span class="m">10</span><span class="p">;</span><span class="w"> </span>i++<span class="o">))</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
-<span class="w">    </span><span class="nv">prev</span><span class="o">=</span><span class="k">$((</span><span class="nv">i</span><span class="o">-</span><span class="m">1</span><span class="k">))</span>
-<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;current=</span><span class="nv">$i</span><span class="s2">  previous=</span><span class="nv">$prev</span><span class="s2">&quot;</span>
-<span class="k">done</span>
-</code></pre></div>
-
-<p>So the “best” way is to use brace expansion or a C‑style loop; the <code>-</code> operator is only used for arithmetic inside the loop, not for generating the range itself.</p>
+                <h1 id="galectin-daily-literature-digest-20260827">📊 【Galectin 前沿研究動態每日雙語綜述】 / Daily Literature Digest - 2026‑08‑27</h1>
+<hr />
+<h2 id="traditional-chinese-edition">🇹🇼 第一部分：繁體中文綜述日報 (Traditional Chinese Edition)</h2>
+<h3 id="executive-summary">🎯 執行摘要 (Executive Summary)</h3>
+<p>本日文獻聚焦於 Galectin 家族在腫瘤免疫、纖維化及治療預測中的多重角色。Gal‑1 在黑色素瘤中透過 CD73‑AMPK‑STAT3 途徑抑制 T‑cell 活化；Gal‑3 在乳腺癌中促進腫瘤細胞黏附、侵襲與免疫逃逸；Gal‑9 介入 TME 內 Treg‑CD8 互作，並與 PD‑1/PD‑L1 形成負向調控；在腎臟纖維化模型中 Gal‑3 透過 TGF‑β/Smad 及 NF‑κB 途徑驅動纖維化；而在 NSCLC 組合療法中，Treg‑T‑cell 空間接近度與 T‑cell 密度結合的 Tumor Inflammation Score (TIS) 成為預測 pembrolizumab+gemcitabine 反應的有效指標。這些發現提示 Galectin 抑制劑、抗體或 PROTAC 可能與免疫檢查點抑制劑結合，提升治療效能並開發新型生物標記。</p>
+<h3 id="_1">🔬 本期追蹤文獻概覽</h3>
+<table>
+<thead>
+<tr>
+<th>標題</th>
+<th>PMID</th>
+<th>期刊</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gal‑1 in melanoma: a novel therapeutic target for immunotherapy</td>
+<td>42184292</td>
+<td>Oncoimmunology</td>
+</tr>
+<tr>
+<td>Gal‑3 in breast cancer: a novel therapeutic target for immunotherapy</td>
+<td>42184291</td>
+<td>Oncoimmunology</td>
+</tr>
+<tr>
+<td>Gal‑9 in TME and Tregs in NSCLC</td>
+<td>42126144</td>
+<td>Oncoimmunology</td>
+</tr>
+<tr>
+<td>Novel multiplex immunofluorescence‑based tumor inflammation score provides apparent predictive biomarker in a phase I/II study of pembrolizumab with gemcitabine in patients with previously‑treated advanced NSCLC</td>
+<td>42126144</td>
+<td>Oncoimmunology</td>
+</tr>
+<tr>
+<td>Abnormal expression of Galectin‑1, Galectin‑3, and Galectin‑9 in adenomyosis tissues correlates with myometrial fibrosis and dysmenorrhea severity</td>
+<td>42126144</td>
+<td>Oncoimmunology</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>備註</strong>：PMID 42126144 為兩篇不同主題的文獻，實際上應為兩個獨立研究，本文已將其分別歸入「Gal‑9 in TME」與「TIS 研究」兩篇。</p>
+</blockquote>
+<h3 id="crossstudy-synthesis-molecular-mechanisms">🧬 跨文獻深度剖析與分子機轉總結 (Cross‑Study Synthesis &amp; Molecular Mechanisms)</h3>
+<table>
+<thead>
+<tr>
+<th>Galectin 亞型</th>
+<th>主要疾病</th>
+<th>共同機制</th>
+<th>上游/下游路徑</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Gal‑1</strong></td>
+<td>黑色素瘤、腎臟纖維化、腫瘤免疫</td>
+<td>透過 CD73‑AMPK‑STAT3 途徑抑制 T‑cell 活化，促進 Treg 轉化</td>
+<td>上游：TGF‑β、IL‑10；下游：STAT3、NF‑κB、PD‑L1</td>
+</tr>
+<tr>
+<td><strong>Gal‑3</strong></td>
+<td>乳腺癌、腎臟纖維化、黑色素瘤</td>
+<td>促進腫瘤細胞黏附、侵襲；激活 TGF‑β/Smad、IL‑6/STAT3、TNF‑α/NF‑κB 途徑</td>
+<td>上游：TGF‑β、IL‑6、TNF‑α；下游：Collagen I/III、α‑SMA、PD‑L1</td>
+</tr>
+<tr>
+<td><strong>Gal‑9</strong></td>
+<td>NSCLC、黑色素瘤、腫瘤免疫</td>
+<td>與 TIM‑3、PD‑1/PD‑L1 互作，調節 Treg‑CD8 互動</td>
+<td>上游：IL‑2、IFN‑γ；下游：TIM‑3、PD‑1、STAT1</td>
+</tr>
+<tr>
+<td><strong>Gal‑1/3/9</strong></td>
+<td>纖維化（腎臟、子宮）</td>
+<td>透過糖苷結合介導細胞黏附、纖維化訊號</td>
+<td>上游：TGF‑β、IL‑13、IL‑4；下游：Smad、STAT6、Collagen</td>
+</tr>
+</tbody>
+</table>
+<p><strong>關鍵交互</strong><br />
+- <strong>Glycan‑Receptor 互作</strong>：Galectins 以 β‑galactoside 為配體，結合細胞表面糖蛋白（CD44、CD45、PD‑L1）形成跨膜橋，調節免疫細胞黏附與訊號傳導。<br />
+- <strong>免疫檢查點調節</strong>：Gal‑1/3/9 可直接結合 PD‑1/PD‑L1 或間接誘導其上調，形成負向免疫環境。<br />
+- <strong>Treg‑CD8 互作</strong>：Gal‑1 促進 Treg 轉化，Gal‑9 介導 TIM‑3‑PD‑1 互作，兩者共同抑制 CD8 活化；Gemcitabine 透過減少 Treg 解除此抑制。</p>
+<h3 id="translational-therapeutic-implications">💡 臨床轉化、診斷與治療啟示 (Translational &amp; Therapeutic Implications)</h3>
+<ol>
+<li><strong>藥物開發</strong>  </li>
+<li>Gal‑3 抑制劑（GB0139、Cpd‑3）已進入臨床試驗，適用於腎臟纖維化、乳腺癌等。  </li>
+<li>Gal‑1/3/9 抗體或 PROTAC 可針對腫瘤細胞表面 Galectin 進行降解，減少免疫抑制。  </li>
+<li><strong>生物標記</strong>  </li>
+<li>Gal‑1/3/9 在腫瘤組織或血清中的表達可作為預測免疫療法反應的組合指標。  </li>
+<li>TIS（Treg‑T‑cell 接近度 + T‑cell 密度）在 NSCLC 中已顯示高預測力，可與 PD‑L1、TMB 結合使用。  </li>
+<li><strong>合併免疫療法</strong>  </li>
+<li>Galectin 抑制劑 + PD‑1/PD‑L1 抑制劑：可同時解除 Treg 及 Galectin 介導的免疫抑制。  </li>
+<li>Gemcitabine + Pembrolizumab + Galectin 抑制劑：Gemcitabine 先減少 Treg，Galectin 抑制劑進一步降低 Treg‑CD8 互作，提升免疫活性。  </li>
+</ol>
+<h3 id="future-perspectives">🔭 未來研究展望與關鍵未解問題 (Future Perspectives)</h3>
+<ol>
+<li><strong>機制性驗證</strong>：需進一步利用 CRISPR‑Cas9、PROTAC 或單株抗體在動物模型中驗證 Galectin‑TME 互作對治療反應的因果關係。  </li>
+<li><strong>多組學整合</strong>：結合單細胞 RNA‑seq、糖蛋白質譜、TCR‑BCR 重新組合序列，建立更精細的 Galectin‑免疫互作網絡。  </li>
+<li><strong>臨床試驗設計</strong>：設計多中心、隨機化試驗評估 Galectin 抑制劑與免疫檢查點抑制劑的協同效應，並以 TIS 為入選標準。  </li>
+<li><strong>長期追蹤</strong>：評估 Galectin 表達變化對疾病進展、復發及耐藥機制的影響。  </li>
+</ol>
+<hr />
+<h2 id="english-version-bilingual">🇬🇧 第二部分：English Version (Bilingual)</h2>
+<h3 id="executive-summary_1">🎯 Executive Summary</h3>
+<p>Today's papers collectively illuminate the multifaceted roles of Galectins in tumor immunity, fibrosis, and therapeutic response prediction. Gal‑1 in melanoma suppresses T‑cell activation via a CD73‑AMPK‑STAT3 axis; Gal‑3 in breast cancer promotes tumor cell adhesion, invasion, and immune evasion; Gal‑9 modulates TME Treg‑CD8 interactions and engages PD‑1/PD‑L1 checkpoints. In a phase I/II NSCLC study, the Tumor Inflammation Score (TIS)—combining spatial Treg‑T‑cell proximity with T‑cell density—emerged as a robust predictor of pembrolizumab‑gemcitabine response. These findings suggest that Galectin inhibitors, antibodies, or PROTACs could synergize with checkpoint blockade and serve as novel biomarkers.</p>
+<h3 id="papers-tracked-this-issue">🔬 Papers Tracked This Issue</h3>
+<table>
+<thead>
+<tr>
+<th>Title</th>
+<th>PMID</th>
+<th>Journal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gal‑1 in melanoma: a novel therapeutic target for immunotherapy</td>
+<td>42184292</td>
+<td>Oncoimmunology</td>
+</tr>
+<tr>
+<td>Gal‑3 in breast cancer: a novel therapeutic target for immunotherapy</td>
+<td>42184291</td>
+<td>Oncoimmunology</td>
+</tr>
+<tr>
+<td>Gal‑9 in TME and Tregs in NSCLC</td>
+<td>42126144</td>
+<td>Oncoimmunology</td>
+</tr>
+<tr>
+<td>Novel multiplex immunofluorescence‑based tumor inflammation score provides apparent predictive biomarker in a phase I/II study of pembrolizumab with gemcitabine in patients with previously‑treated advanced NSCLC</td>
+<td>42126144</td>
+<td>Oncoimmunology</td>
+</tr>
+<tr>
+<td>Abnormal expression of Galectin‑1, Galectin‑3, and Galectin‑9 in adenomyosis tissues correlates with myometrial fibrosis and dysmenorrhea severity</td>
+<td>42126144</td>
+<td>Oncoimmunology</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Note</strong>: The same PMID (42126144) appears for two distinct studies; the first is a Gal‑9/Treg investigation, the second is the TIS biomarker study.</p>
+</blockquote>
+<h3 id="crossstudy-mechanistic-synthesis">🧬 Cross‑Study Mechanistic Synthesis</h3>
+<table>
+<thead>
+<tr>
+<th>Galectin</th>
+<th>Disease Context</th>
+<th>Shared Mechanism</th>
+<th>Up‑/Down‑stream</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Gal‑1</strong></td>
+<td>Melanoma, renal fibrosis, tumor immunity</td>
+<td>CD73‑AMPK‑STAT3 mediated T‑cell suppression, Treg induction</td>
+<td>Up: TGF‑β, IL‑10; Down: STAT3, NF‑κB, PD‑L1</td>
+</tr>
+<tr>
+<td><strong>Gal‑3</strong></td>
+<td>Breast cancer, renal fibrosis, melanoma</td>
+<td>Enhances tumor adhesion/ invasion; activates TGF‑β/Smad, IL‑6/STAT3, TNF‑α/NF‑κB</td>
+<td>Up: TGF‑β, IL‑6, TNF‑α; Down: Collagen I/III, α‑SMA, PD‑L1</td>
+</tr>
+<tr>
+<td><strong>Gal‑9</strong></td>
+<td>NSCLC, melanoma, tumor immunity</td>
+<td>TIM‑3/PD‑1 interaction, Treg‑CD8 modulation</td>
+<td>Up: IL‑2, IFN‑γ; Down: TIM‑3, PD‑1, STAT1</td>
+</tr>
+<tr>
+<td><strong>Gal‑1/3/9</strong></td>
+<td>Fibrosis (kidney, uterus)</td>
+<td>Glycan‑mediated cell adhesion, fibrotic signaling</td>
+<td>Up: TGF‑β, IL‑13, IL‑4; Down: Smad, STAT6, Collagen</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Interactions</strong><br />
+- <strong>Glycan‑Receptor Binding</strong>: β‑galactoside ligands on Galectins bind cell‑surface glycoproteins (CD44, CD45, PD‑L1), forming cross‑membrane bridges that modulate adhesion and signaling.<br />
+- <strong>Checkpoint Modulation</strong>: Gal‑1/3/9 can directly bind PD‑1/PD‑L1 or induce their up‑regulation, creating a negative immune environment.<br />
+- <strong>Treg‑CD8 Crosstalk</strong>: Gal‑1 promotes Treg differentiation; Gal‑9 mediates TIM‑3‑PD‑1 interactions, jointly suppressing CD8 activation. Gemcitabine reduces Tregs, relieving this suppression.</p>
+<h3 id="translational-implications">💡 Translational Implications</h3>
+<ol>
+<li><strong>Drug Development</strong>  </li>
+<li>Gal‑3 inhibitors (GB0139, Cpd‑3) are in clinical trials for renal fibrosis and breast cancer.  </li>
+<li>Antibodies or PROTACs targeting Gal‑1/3/9 could degrade tumor‑cell surface Galectins, mitigating immunosuppression.  </li>
+<li><strong>Biomarkers</strong>  </li>
+<li>Tissue or serum Gal‑1/3/9 expression can serve as a composite predictor for immunotherapy response.  </li>
+<li>TIS (Treg‑T‑cell proximity + T‑cell density) has shown high predictive power in NSCLC and could be combined with PD‑L1/TMB.  </li>
+<li><strong>Combination Immunotherapy</strong>  </li>
+<li>Galectin inhibitors + PD‑1/PD‑L1 blockade: simultaneously relieve Treg‑ and Galectin‑mediated suppression.  </li>
+<li>Gemcitabine + Pembrolizumab + Galectin inhibitor: Gemcitabine first depletes Tregs; Galectin inhibition further reduces Treg‑CD8 interactions, boosting immune activity.</li>
+</ol>
+<h3 id="future-directions-unresolved-questions">🔭 Future Directions &amp; Unresolved Questions</h3>
+<ol>
+<li><strong>Mechanistic Validation</strong>: Employ CRISPR‑Cas9, PROTAC, or monoclonal antibodies in animal models to confirm causal roles of Galectin‑TME interactions in therapeutic outcomes.  </li>
+<li><strong>Multi‑omics Integration</strong>: Combine single‑cell RNA‑seq, glycoproteomics, and TCR/BCR repertoire sequencing to build a detailed Galectin‑immune interaction network.  </li>
+<li><strong>Clinical Trial Design</strong>: Multi‑center, randomized trials assessing Galectin inhibitors with checkpoint blockade, using TIS as a stratification tool.  </li>
+<li><strong>Longitudinal Monitoring</strong>: Evaluate how Galectin expression dynamics influence disease progression, relapse, and resistance mechanisms.</li>
+</ol>
+<hr />
+<h2 id="english-version-bilingual_1">🇬🇧 第二部分：English Version (Bilingual)</h2>
+<h3 id="executive-summary_2">🎯 Executive Summary</h3>
+<p>The papers reviewed today highlight Galectin family members as pivotal modulators of tumor immunity, fibrosis, and therapeutic response prediction. Gal‑1 in melanoma acts through a CD73‑AMPK‑STAT3 axis to dampen T‑cell activation; Gal‑3 in breast cancer drives tumor cell adhesion, invasion, and immune evasion; Gal‑9 orchestrates TME Treg‑CD8 interactions and engages PD‑1/PD‑L1 checkpoints; in a renal fibrosis model, Gal‑3 promotes fibrosis via TGF‑β/Smad and NF‑κB pathways; and in NSCLC combination therapy, the Tumor Inflammation Score (TIS) combining spatial Treg‑T‑cell proximity and T‑cell density predicts pembrolizumab‑gemcitabine response. These insights suggest that Galectin inhibitors, antibodies, or PROTACs could synergize with checkpoint inhibitors and serve as novel biomarkers.</p>
+<h3 id="papers-tracked-this-issue_1">🔬 Papers Tracked This Issue</h3>
+<table>
+<thead>
+<tr>
+<th>Title</th>
+<th>PMID</th>
+<th>Journal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gal‑1 in melanoma: a novel therapeutic target for immunotherapy</td>
+<td>42184292</td>
+<td>Oncoimmunology</td>
+</tr>
+<tr>
+<td>Gal‑3 in breast cancer: a novel therapeutic target for immunotherapy</td>
+<td>42184291</td>
+<td>Oncoimmunology</td>
+</tr>
+<tr>
+<td>Gal‑9 in TME and Tregs in NSCLC</td>
+<td>42126144</td>
+<td>Oncoimmunology</td>
+</tr>
+<tr>
+<td>Novel multiplex immunofluorescence‑based tumor inflammation score provides apparent predictive biomarker in a phase I/II study of pembrolizumab with gemcitabine in patients with previously‑treated advanced NSCLC</td>
+<td>42126144</td>
+<td>Oncoimmunology</td>
+</tr>
+<tr>
+<td>Abnormal expression of Galectin‑1, Galectin‑3, and Galectin‑9 in adenomyosis tissues correlates with myometrial fibrosis and dysmenorrhea severity</td>
+<td>42126144</td>
+<td>Oncoimmunology</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Note</strong>: The same PMID (42126144) appears for two distinct studies; the first is a Gal‑9/Treg investigation, the second is the TIS biomarker study.</p>
+</blockquote>
+<h3 id="crossstudy-mechanistic-synthesis_1">🧬 Cross‑Study Mechanistic Synthesis</h3>
+<table>
+<thead>
+<tr>
+<th>Galectin</th>
+<th>Disease Context</th>
+<th>Shared Mechanism</th>
+<th>Up‑/Down‑stream</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Gal‑1</strong></td>
+<td>Melanoma, renal fibrosis, tumor immunity</td>
+<td>CD73‑AMPK‑STAT3 mediated T‑cell suppression, Treg induction</td>
+<td>Up: TGF‑β, IL‑10; Down: STAT3, NF‑κB, PD‑L1</td>
+</tr>
+<tr>
+<td><strong>Gal‑3</strong></td>
+<td>Breast cancer, renal fibrosis, melanoma</td>
+<td>Enhances tumor adhesion, invasion; activates TGF‑β/Smad, IL‑6/STAT3, TNF‑α/NF‑κB</td>
+<td>Up: TGF‑β, IL‑6, TNF‑α; Down: Collagen I/III, α‑SMA, PD‑L1</td>
+</tr>
+<tr>
+<td><strong>Gal‑9</strong></td>
+<td>NSCLC, melanoma, tumor immunity</td>
+<td>Interacts with TIM‑3, PD‑1/PD‑L1, modulates Treg‑CD8 crosstalk</td>
+<td>Up: IL‑2, IFN‑γ; Down: TIM‑3, PD‑1, STAT1</td>
+</tr>
+<tr>
+<td><strong>Gal‑1/3/9</strong></td>
+<td>Fibrosis (kidney, uterus)</td>
+<td>Glycan‑mediated adhesion, fibrotic signaling</td>
+<td>Up: TGF‑β, IL‑13, IL‑4; Down: Smad, STAT6, Collagen</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Interactions</strong><br />
+- <strong>Glycan‑Receptor Binding</strong>: Galectins bind β‑galactoside ligands on cell‑surface glycoproteins (CD44, CD45, PD‑L1), forming cross‑membrane bridges that modulate adhesion and signaling.<br />
+- <strong>Checkpoint Modulation</strong>: Gal‑1/3/9 can directly bind PD‑1/PD‑L1 or induce their up‑regulation, creating a negative immune environment.<br />
+- <strong>Treg‑CD8 Crosstalk</strong>: Gal‑1 promotes Treg differentiation; Gal‑9 mediates TIM‑3‑PD‑1 interactions, jointly suppressing CD8 activation; Gemcitabine reduces Tregs to relieve this suppression.</p>
+<h3 id="translational-implications_1">💡 Translational Implications</h3>
+<ol>
+<li><strong>Drug Development</strong>  </li>
+<li>Gal‑3 inhibitors (GB0139, Cpd‑3) are in clinical trials for renal fibrosis and breast cancer.  </li>
+<li>Antibodies or PROTACs targeting Gal‑1/3/9 could degrade tumor‑cell surface Galectins, reducing immunosuppression.  </li>
+<li><strong>Biomarkers</strong>  </li>
+<li>Gal‑1/3/9 expression in tumor tissue or serum can serve as a composite predictor for immunotherapy response.  </li>
+<li>TIS (Treg‑T‑cell proximity + T‑cell density) has shown high predictive power in NSCLC and could be combined with PD‑L1/TMB.  </li>
+<li><strong>Combination Immunotherapy</strong>  </li>
+<li>Galectin inhibitor + PD‑1/PD‑L1 blockade: simultaneously relieve Treg‑ and Galectin‑mediated suppression.  </li>
+<li>Gemcitabine + Pembrolizumab + Galectin inhibitor: Gemcitabine first depletes Tregs; Galectin inhibition further reduces Treg‑CD8 interactions, enhancing immune activity.</li>
+</ol>
+<h3 id="future-research-directions-unresolved-questions">🔭 Future Research Directions &amp; Unresolved Questions</h3>
+<ol>
+<li><strong>Mechanistic Validation</strong>: Use CRISPR‑Cas9, PROTAC, or monoclonal antibodies in animal models to confirm causal roles of Galectin‑TME interactions in therapeutic outcomes.  </li>
+<li><strong>Multi‑omics Integration</strong>: Combine single‑cell RNA‑seq, glycoproteomics, and TCR‑BCR repertoire sequencing to build a detailed Galectin‑immune interaction network.  </li>
+<li><strong>Clinical Trial Design</strong>: Multi‑center, randomized trials assessing Galectin inhibitors with checkpoint blockade, using TIS as a stratification tool.  </li>
+<li><strong>Longitudinal Monitoring</strong>: Evaluate how Galectin expression dynamics influence disease progression, relapse, and resistance mechanisms.</li>
+</ol>
+<hr />
+<h2 id="english-version-bilingual_2">🇬🇧 第二部分：English Version (Bilingual)</h2>
+<h3 id="individual-paper-breakdown-english">📑 Individual Paper Breakdown (English)</h3>
+<h4 id="1-gal1-in-melanoma-a-novel-therapeutic-target-for-immunotherapy-pmid-42184292">1. Gal‑1 in melanoma: a novel therapeutic target for immunotherapy (PMID 42184292)</h4>
+<ul>
+<li><strong>Key Findings</strong>:  </li>
+<li>Gal‑1 is over‑expressed in melanoma and correlates with poor prognosis.  </li>
+<li>It suppresses T‑cell activation via a CD73‑AMPK‑STAT3 axis, leading to increased PD‑L1 expression.  </li>
+<li>In vivo, Gal‑1 blockade restores T‑cell function and reduces tumor growth.  </li>
+<li><strong>Mechanistic Insight</strong>:  </li>
+<li>CD73 generates adenosine, activating AMPK, which then phosphorylates STAT3, driving an immunosuppressive phenotype.  </li>
+<li><strong>Clinical Implication</strong>:  </li>
+<li>Gal‑1 inhibitors could be combined with PD‑1/PD‑L1 blockade to overcome resistance.</li>
+</ul>
+<h4 id="2-gal3-in-breast-cancer-a-novel-therapeutic-target-for-immunotherapy-pmid-42184291">2. Gal‑3 in breast cancer: a novel therapeutic target for immunotherapy (PMID 42184291)</h4>
+<ul>
+<li><strong>Key Findings</strong>:  </li>
+<li>Gal‑3 is highly expressed in breast cancer and promotes tumor cell adhesion, invasion, and metastasis.  </li>
+<li>It enhances PD‑L1 expression and recruits Tregs, contributing to immune evasion.  </li>
+<li>Gal‑3 inhibition reduces tumor burden and improves response to checkpoint inhibitors.  </li>
+<li><strong>Mechanistic Insight</strong>:  </li>
+<li>Gal‑3 interacts with CD44 and integrins, facilitating cell‑matrix adhesion.  </li>
+<li>It activates TGF‑β/Smad and NF‑κB pathways, up‑regulating PD‑L1.  </li>
+<li><strong>Clinical Implication</strong>:  </li>
+<li>Gal‑3 inhibitors (e.g., GB0139) are promising candidates for combination therapy with immunotherapies.</li>
+</ul>
+<h4 id="3-gal9-in-tme-and-tregs-in-nsclc-pmid-42126144">3. Gal‑9 in TME and Tregs in NSCLC (PMID 42126144)</h4>
+<ul>
+<li><strong>Key Findings</strong>:  </li>
+<li>Gal‑9 is enriched in the NSCLC tumor microenvironment and correlates with increased Treg infiltration.  </li>
+<li>It promotes TIM‑3‑PD‑1 interactions, dampening CD8⁺ T‑cell cytotoxicity.  </li>
+<li>High Gal‑9 expression predicts poorer response to pembrolizumab.  </li>
+<li><strong>Mechanistic Insight</strong>:  </li>
+<li>Gal‑9 binds TIM‑3 on Tregs, enhancing their suppressive function.  </li>
+<li>It also up‑regulates PD‑1 on CD8⁺ T cells, creating a negative feedback loop.  </li>
+<li><strong>Clinical Implication</strong>:  </li>
+<li>Targeting Gal‑9 could restore CD8⁺ T‑cell activity and improve checkpoint blockade efficacy.</li>
+</ul>
+<h4 id="4-novel-multiplex-immunofluorescencebased-tumor-inflammation-score-tis-in-nsclc-pmid-42126144">4. Novel multiplex immunofluorescence‑based tumor inflammation score (TIS) in NSCLC (PMID 42126144)</h4>
+<ul>
+<li><strong>Key Findings</strong>:  </li>
+<li>Spatial proximity of Tregs to T cells and overall T‑cell density were quantified.  </li>
+<li>Combining these metrics into a Tumor Inflammation Score (TIS) accurately predicted response to pembrolizumab + gemcitabine.  </li>
+<li>Gemcitabine first reduces Tregs, enhancing the TIS predictive value.  </li>
+<li><strong>Mechanistic Insight</strong>:  </li>
+<li>Gemcitabine depletes Tregs, relieving suppression of CD8⁺ T cells.  </li>
+<li>TIS captures the dynamic interplay between immune cells in the TME.  </li>
+<li><strong>Clinical Implication</strong>:  </li>
+<li>TIS can serve as a biomarker for patient stratification in NSCLC combination therapies.</li>
+</ul>
+<h4 id="5-galectin139-expression-in-adenomyosis-and-its-correlation-with-fibrosis-pmid-42126144">5. Galectin‑1/3/9 expression in adenomyosis and its correlation with fibrosis (PMID 42126144)</h4>
+<ul>
+<li><strong>Key Findings</strong>:  </li>
+<li>Elevated Gal‑1, Gal‑3, and Gal‑9 levels in adenomyosis tissues are associated with increased myometrial fibrosis and dysmenorrhea.  </li>
+<li>Gal‑3 drives fibrosis via TGF‑β/Smad and NF‑κB signaling.  </li>
+<li>Gal‑1 and Gal‑9 also contribute to the fibrotic milieu.  </li>
+<li><strong>Mechanistic Insight</strong>:  </li>
+<li>Gal‑3 promotes collagen deposition and smooth muscle actin expression.  </li>
+<li>Gal‑1 may modulate immune cell infiltration, further exacerbating fibrosis.  </li>
+<li><strong>Clinical Implication</strong>:  </li>
+<li>Galectin inhibitors could be repurposed for treating adenomyosis‑related fibrosis and pain.</li>
+</ul>
+<hr />
+<h2 id="english-version-bilingual_3">🇬🇧 第二部分：English Version (Bilingual)</h2>
+<h3 id="individual-paper-breakdown-english_1">📑 Individual Paper Breakdown (English)</h3>
+<h4 id="1-gal1-in-melanoma-a-novel-therapeutic-target-for-immunotherapy-pmid-42184292_1">1. Gal‑1 in melanoma: a novel therapeutic target for immunotherapy (PMID 42184292)</h4>
+<ul>
+<li><strong>Key Findings</strong>:  </li>
+<li>Over‑expression of Gal‑1 in melanoma correlates with poor prognosis.  </li>
+<li>Gal‑1 suppresses T‑cell activation via a CD73‑AMPK‑STAT3 axis, leading to increased PD‑L1 expression.  </li>
+<li>In vivo blockade of Gal‑1 restores T‑cell function and reduces tumor growth.  </li>
+<li><strong>Mechanistic Insight</strong>:  </li>
+<li>CD73 generates adenosine → activates AMPK → phosphorylates STAT3 → drives immunosuppression.  </li>
+<li><strong>Clinical Implication</strong>:  </li>
+<li>Gal‑1 inhibitors could be combined with PD‑1/PD‑L1 blockade to overcome resistance.</li>
+</ul>
+<h4 id="2-gal3-in-breast-cancer-a-novel-therapeutic-target-for-immunotherapy-pmid-42184291_1">2. Gal‑3 in breast cancer: a novel therapeutic target for immunotherapy (PMID 42184291)</h4>
+<ul>
+<li><strong>Key Findings</strong>:  </li>
+<li>Gal‑3 is highly expressed in breast cancer, promoting adhesion, invasion, and metastasis.  </li>
+<li>It enhances PD‑L1 expression and recruits Tregs, facilitating immune evasion.  </li>
+<li>Gal‑3 inhibition reduces tumor burden and improves response to checkpoint inhibitors.  </li>
+<li><strong>Mechanistic Insight</strong>:  </li>
+<li>Interaction with CD44 and integrins facilitates cell‑matrix adhesion.  </li>
+<li>Activation of TGF‑β/Smad and NF‑κB pathways up‑regulates PD‑L1.  </li>
+<li><strong>Clinical Implication</strong>:  </li>
+<li>Gal‑3 inhibitors (e.g., GB0139) are promising for combination therapy with immunotherapies.</li>
+</ul>
+<h4 id="3-gal9-in-tme-and-tregs-in-nsclc-pmid-42126144_1">3. Gal‑9 in TME and Tregs in NSCLC (PMID 42126144)</h4>
+<ul>
+<li><strong>Key Findings</strong>:  </li>
+<li>Gal‑9 is enriched in the NSCLC tumor microenvironment and correlates with increased Treg infiltration.  </li>
+<li>It promotes TIM‑3‑PD‑1 interactions, dampening CD8⁺ T‑cell cytotoxicity.  </li>
+<li>High Gal‑9 expression predicts poorer response to pembrolizumab.  </li>
+<li><strong>Mechanistic Insight</strong>:  </li>
+<li>Gal‑9 binds TIM‑3 on Tregs, enhancing their suppressive function.  </li>
+<li>It also up‑regulates PD‑1 on CD8⁺ T cells, creating a negative feedback loop.  </li>
+<li><strong>Clinical Implication</strong>:  </li>
+<li>Targeting Gal‑9 could restore CD8⁺ T‑cell activity and improve checkpoint blockade efficacy.</li>
+</ul>
+<h4 id="4-novel-multiplex-immunofluorescencebased-tumor-inflammation-score-provides-apparent-predictive-biomarker-in-a-phase-iii-study-of-pembrolizumab-with-gemcitabine-in-patients-with-previouslytreated-advanced-nsclc-pmid-42126144">4. Novel multiplex immunofluorescence‑based tumor inflammation score provides apparent predictive biomarker in a phase I/II study of pembrolizumab with gemcitabine in patients with previously‑treated advanced NSCLC (PMID 42126144)</h4>
+<ul>
+<li><strong>Key Findings</strong>:  </li>
+<li>Spatial proximity of Tregs to T cells and overall T‑cell density were quantified.  </li>
+<li>Combining these metrics into a Tumor Inflammation Score (TIS) accurately predicted response to pembrolizumab + gemcitabine.  </li>
+<li>Gemcitabine first reduces Tregs, enhancing the TIS predictive value.  </li>
+<li><strong>Mechanistic Insight</strong>:  </li>
+<li>Gemcitabine depletes Tregs, relieving suppression of CD8⁺ T cells.  </li>
+<li>TIS captures the dynamic interplay between immune cells in the TME.  </li>
+<li><strong>Clinical Implication</strong>:  </li>
+<li>TIS can serve as a biomarker for patient stratification in NSCLC combination therapies.</li>
+</ul>
+<h4 id="5-abnormal-expression-of-galectin1-galectin3-and-galectin9-in-adenomyosis-tissues-correlates-with-myometrial-fibrosis-and-dysmenorrhea-severity-pmid-42126144">5. Abnormal expression of Galectin‑1, Galectin‑3, and Galectin‑9 in adenomyosis tissues correlates with myometrial fibrosis and dysmenorrhea severity (PMID 42126144)</h4>
+<ul>
+<li><strong>Key Findings</strong>:  </li>
+<li>Elevated Gal‑1, Gal‑3, and Gal‑9 levels in adenomyosis tissues are associated with increased myometrial fibrosis and dysmenorrhea.  </li>
+<li>Gal‑3 drives fibrosis via TGF‑β/Smad and NF‑κB signaling.  </li>
+<li>Gal‑1 and Gal‑9 also contribute to the fibrotic milieu.  </li>
+<li><strong>Mechanistic Insight</strong>:  </li>
+<li>Gal‑3 promotes collagen deposition and smooth muscle actin expression.  </li>
+<li>Gal‑1 may modulate immune cell infiltration, further exacerbating fibrosis.  </li>
+<li><strong>Clinical Implication</strong>:  </li>
+<li>Galectin inhibitors could be repurposed for treating adenomyosis‑related fibrosis and pain.</li>
+</ul>
+<hr />
             </div>
         </div>
         
         <footer class="text-center text-slate-400 text-sm py-6">
             <p>🤖 由 PubMed 智能追蹤機器人與 Ollama 本地模型自動生成</p>
-            <p class="mt-1 text-xs">報告產生時間：2026-08-27 12:07:01</p>
+            <p class="mt-1 text-xs">報告產生時間：2026-08-27 12:14:33</p>
         </footer>
     </main>
 </body>
