@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galectin 文獻追蹤與自動綜述系統 | WebUI</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .prose h1 { font-size: 1.75rem; font-weight: 800; color: #0f766e; margin-top: 1.5rem; margin-bottom: 1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
+        .prose h2 { font-size: 1.4rem; font-weight: 700; color: #115e59; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        .prose h3 { font-size: 1.2rem; font-weight: 600; color: #1e293b; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+        .prose p { margin-bottom: 0.9rem; line-height: 1.7; color: #334155; }
+        .prose ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; color: #334155; }
+        .prose ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1rem; color: #334155; }
+        .prose blockquote { border-left: 4px solid #0d9488; padding-left: 1rem; color: #475569; font-style: italic; margin: 1rem 0; }
+        .prose strong { color: #0f172a; font-weight: 600; }
+        .prose code { background-color: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; color: #0f766e; }
+        .prose hr { margin: 1.5rem 0; border-color: #e2e8f0; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans" x-data="app()" x-init="initApp()" x-cloak>
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-teal-500/20">
+                        <i class="fa-solid fa-dna text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-lg font-bold tracking-tight bg-gradient-to-r from-teal-300 via-cyan-200 to-white bg-clip-text text-transparent">
+                            Galectin 文獻追蹤系統
+                        </span>
+                        <div class="text-xs text-teal-400/80 font-mono">PubMed + Ollama + GitHub Pages</div>
+                    </div>
+                </div>
+
+                <!-- Nav Tabs -->
+                <nav class="hidden md:flex space-x-1">
+                    <button @click="currentTab = 'overview'" :class="currentTab === 'overview' ? 'bg-teal-600/90 text-white shadow' : 'text-slate-300 hover:bg-slate-800 hover:text-white'" class="px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-chart-pie text-xs"></i> 總覽與執行
+                    </button>
+                    <button @click="currentTab = 'papers'" :class="currentTab === 'papers' ? 'bg-teal-600/90 text-white shadow' : 'text-slate-300 hover:bg-slate-800 hover:text-white'" class="px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-book-medical text-xs"></i> 文獻庫 (<span x-text="stats.total_papers"></span>)
+                    </button>
+                    <button @click="currentTab = 'reports'" :class="currentTab === 'reports' ? 'bg-teal-600/90 text-white shadow' : 'text-slate-300 hover:bg-slate-800 hover:text-white'" class="px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-newspaper text-xs"></i> 綜述日報 (<span x-text="reports.length"></span>)
+                    </button>
+                    <button @click="currentTab = 'settings'" :class="currentTab === 'settings' ? 'bg-teal-600/90 text-white shadow' : 'text-slate-300 hover:bg-slate-800 hover:text-white'" class="px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-sliders text-xs"></i> 系統設定
+                    </button>
+                    <button @click="currentTab = 'logs'" :class="currentTab === 'logs' ? 'bg-teal-600/90 text-white shadow' : 'text-slate-300 hover:bg-slate-800 hover:text-white'" class="px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-terminal text-xs"></i> 運行日誌
+                    </button>
+                </nav>
+
+                <!-- Status Pill & Quick Action -->
+                <div class="flex items-center space-x-3">
+                    <template x-if="status.runner && status.runner.is_running">
+                        <div class="flex items-center gap-2 bg-amber-500/20 border border-amber-500/40 text-amber-300 px-3 py-1 rounded-full text-xs animate-pulse">
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+                            <span>任務執行中...</span>
+                        </div>
+                    </template>
+                    <template x-if="status.runner && !status.runner.is_running">
+                        <div class="flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 px-2.5 py-1 rounded-full text-xs">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <span>待命中</span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <div class="md:hidden flex overflow-x-auto px-2 py-2 border-t border-slate-800 space-x-1 bg-slate-900/90">
+            <button @click="currentTab = 'overview'" :class="currentTab === 'overview' ? 'bg-teal-600 text-white' : 'text-slate-400'" class="px-3 py-1.5 rounded text-xs whitespace-nowrap">總覽</button>
+            <button @click="currentTab = 'papers'" :class="currentTab === 'papers' ? 'bg-teal-600 text-white' : 'text-slate-400'" class="px-3 py-1.5 rounded text-xs whitespace-nowrap">文獻庫</button>
+            <button @click="currentTab = 'reports'" :class="currentTab === 'reports' ? 'bg-teal-600 text-white' : 'text-slate-400'" class="px-3 py-1.5 rounded text-xs whitespace-nowrap">綜述日報</button>
+            <button @click="currentTab = 'settings'" :class="currentTab === 'settings' ? 'bg-teal-600 text-white' : 'text-slate-400'" class="px-3 py-1.5 rounded text-xs whitespace-nowrap">設定</button>
+            <button @click="currentTab = 'logs'" :class="currentTab === 'logs' ? 'bg-teal-600 text-white' : 'text-slate-400'" class="px-3 py-1.5 rounded text-xs whitespace-nowrap">日誌</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- ================= TAB 1: OVERVIEW ================= -->
+        <div x-show="currentTab === 'overview'" class="space-y-6">
+
+            <!-- Stat Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <!-- Card 1: Schedule -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm relative overflow-hidden">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">每日排程時間</p>
+                            <h3 class="text-2xl font-bold text-slate-800 mt-1" x-text="config.schedule_hour + ':' + String(config.schedule_minute).padStart(2, '0') + ' AM'">02:00 AM</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-xl">
+                            <i class="fa-regular fa-clock"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-500">下次執行：<span class="font-mono text-teal-700" x-text="status.scheduler ? (status.scheduler.next_run_time || '未排程') : '讀取中...'"></span></span>
+                        <span :class="config.schedule_enabled ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400 bg-slate-100'" class="px-2 py-0.5 rounded text-[11px] font-semibold" x-text="config.schedule_enabled ? '已啟用' : '已停用'"></span>
+                    </div>
+                </div>
+
+                <!-- Card 2: Papers In DB -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm relative overflow-hidden">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">已去重文獻庫</p>
+                            <h3 class="text-2xl font-bold text-slate-800 mt-1" x-text="stats.total_papers">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-file-lines"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
+                        每次新增追蹤：<span class="font-bold text-slate-700" x-text="config.max_papers_per_run + ' 篇新文獻'"></span>
+                    </div>
+                </div>
+
+                <!-- Card 3: Ollama Model -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm relative overflow-hidden">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ollama 本地模型</p>
+                            <h3 class="text-lg font-bold text-slate-800 mt-1 truncate max-w-[150px]" x-text="config.ollama_model">llama3</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-500">服務連線狀態：</span>
+                        <span :class="status.ollama && status.ollama.connected ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50'" class="px-2 py-0.5 rounded text-[11px] font-semibold" x-text="status.ollama && status.ollama.connected ? '在線' : '離線'"></span>
+                    </div>
+                </div>
+
+                <!-- Card 4: GitHub Pages -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm relative overflow-hidden">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">GitHub Pages 發布</p>
+                            <h3 class="text-lg font-bold text-slate-800 mt-1 truncate max-w-[150px]" x-text="config.github_repo || '未綁定'"></h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                            <i class="fa-brands fa-github"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <a href="/docs-site/index.html" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-semibold inline-flex items-center gap-1">
+                            預覽本地 Pages <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        </a>
+                        <span class="text-slate-400 font-mono" x-text="reports.length + ' 份報告'"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Card: Run Pipeline Now -->
+            <div class="bg-gradient-to-r from-teal-900 via-teal-800 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-lg border border-teal-700/50">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div>
+                        <div class="inline-flex items-center gap-2 bg-teal-500/20 text-teal-300 px-3 py-1 rounded-full text-xs font-semibold border border-teal-500/30 mb-2">
+                            <i class="fa-solid fa-bolt text-teal-400"></i> 一鍵自動化流水線
+                        </div>
+                        <h2 class="text-2xl font-black tracking-tight">立即檢索 PubMed 並產出最新 Galectin 綜述報告</h2>
+                        <p class="text-teal-100/80 text-sm mt-1 max-w-2xl">
+                            點擊按鈕將立即執行：檢索 PubMed 最新文獻 ➔ 比對去重 ➔ 下載 Open Access PDF ➔ 解析全文文字 ➔ 呼叫 Ollama 模型撰寫報告 ➔ 發布至 GitHub Pages。
+                        </p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <button @click="triggerRun()" :disabled="status.runner && status.runner.is_running" 
+                                class="px-6 py-3.5 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-600 disabled:cursor-not-allowed text-slate-950 font-bold rounded-xl shadow-lg transition-all duration-150 flex items-center justify-center gap-2 text-base">
+                            <i :class="status.runner && status.runner.is_running ? 'fa-solid fa-circle-notch fa-spin' : 'fa-solid fa-play'"></i>
+                            <span x-text="status.runner && status.runner.is_running ? '正在執行流水線...' : '立即手動執行 (Run Now)'"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Progress & Step indicator if running -->
+                <div x-show="status.runner && status.runner.is_running" class="mt-6 pt-6 border-t border-teal-700/60">
+                    <div class="flex items-center justify-between text-sm mb-2">
+                        <span class="text-teal-200 font-medium flex items-center gap-2">
+                            <i class="fa-solid fa-circle-notch fa-spin text-teal-400"></i>
+                            當前進度：<span class="font-bold text-white" x-text="status.runner.current_step"></span>
+                        </span>
+                        <span class="font-mono text-teal-300 font-bold" x-text="status.runner.progress + '%'"></span>
+                    </div>
+                    <div class="w-full bg-teal-950 rounded-full h-3 overflow-hidden border border-teal-600/40">
+                        <div class="bg-gradient-to-r from-teal-400 to-cyan-300 h-3 rounded-full transition-all duration-500 ease-out" :style="'width: ' + status.runner.progress + '%'"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two Columns: Recent Reports & Real-time Logs -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Left: Recent Reports List -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-newspaper text-teal-600"></i> 最新綜述報告
+                            </h3>
+                            <button @click="currentTab = 'reports'" class="text-xs text-teal-600 hover:text-teal-800 font-semibold">查看全部 <i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+                        </div>
+                        <div class="space-y-3">
+                            <template x-for="rep in reports.slice(0, 4)" :key="rep.id">
+                                <div class="p-3.5 rounded-xl border border-slate-100 hover:border-teal-300 hover:bg-teal-50/30 transition flex items-center justify-between cursor-pointer" @click="viewReport(rep.id)">
+                                    <div class="pr-2">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="bg-teal-100 text-teal-800 text-[11px] font-mono font-semibold px-2 py-0.5 rounded" x-text="rep.date_str"></span>
+                                            <span class="text-xs text-slate-400" x-text="(rep.paper_pmids ? rep.paper_pmids.length : 0) + ' 篇論文'"></span>
+                                        </div>
+                                        <h4 class="text-sm font-semibold text-slate-800 line-clamp-1" x-text="rep.title"></h4>
+                                    </div>
+                                    <i class="fa-solid fa-chevron-right text-slate-300 text-xs"></i>
+                                </div>
+                            </template>
+                            <template x-if="reports.length === 0">
+                                <div class="py-8 text-center text-slate-400 text-sm">
+                                    尚無歷史報告，請點擊上方「立即手動執行」開始產生第一篇報告！
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Recent Logs -->
+                <div class="bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-800 text-slate-300 flex flex-col justify-between font-mono">
+                    <div>
+                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
+                            <h3 class="text-sm font-bold text-teal-400 flex items-center gap-2">
+                                <i class="fa-solid fa-terminal"></i> 系統活動日誌
+                            </h3>
+                            <span class="text-xs text-slate-500 font-sans">自動定時同步</span>
+                        </div>
+                        <div class="space-y-2 text-xs overflow-y-auto max-h-[220px] pr-2">
+                            <template x-for="log in logs.slice(0, 8)" :key="log.id">
+                                <div class="leading-relaxed">
+                                    <span class="text-slate-500" x-text="log.created_at ? log.created_at.substring(11, 19) : ''"></span>
+                                    <span :class="{
+                                        'text-emerald-400': log.level === 'INFO',
+                                        'text-amber-400': log.level === 'WARNING',
+                                        'text-rose-400 font-bold': log.level === 'ERROR'
+                                    }" class="font-bold" x-text="'[' + log.level + ']'"></span>
+                                    <span class="text-slate-200" x-text="log.message"></span>
+                                </div>
+                            </template>
+                            <template x-if="logs.length === 0">
+                                <div class="text-slate-600 text-center py-6 font-sans">尚無系統日誌</div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= TAB 2: PAPERS EXPLORER ================= -->
+        <div x-show="currentTab === 'papers'" class="space-y-6">
+            <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-book-medical text-teal-600"></i> 已收錄 PubMed 文獻資料庫
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-1">系統自動過濾已存在文獻，確保每日綜述無重複論文</p>
+                    </div>
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <div class="relative flex-1 sm:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text" x-model="paperSearch" placeholder="搜尋標題 / PMID / 期刊..." 
+                                   class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                        </div>
+                        <button @click="fetchPapers()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs rounded-lg transition">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Papers Table / List -->
+                <div class="space-y-4">
+                    <template x-for="p in filteredPapers" :key="p.pmid">
+                        <div class="p-4 rounded-xl border border-slate-200 hover:border-teal-400 hover:shadow-md transition-all bg-white">
+                            <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
+                                <div class="flex-1">
+                                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                                        <span class="bg-teal-50 text-teal-700 font-mono font-bold text-xs px-2.5 py-0.5 rounded border border-teal-200" x-text="'PMID: ' + p.pmid"></span>
+                                        <template x-if="p.pmcid">
+                                            <span class="bg-indigo-50 text-indigo-700 font-mono text-xs px-2.5 py-0.5 rounded border border-indigo-200" x-text="p.pmcid"></span>
+                                        </template>
+                                        <template x-if="p.has_pdf">
+                                            <span class="bg-emerald-50 text-emerald-700 text-xs font-semibold px-2 py-0.5 rounded border border-emerald-200">
+                                                <i class="fa-solid fa-file-pdf mr-1"></i> 已下載 PDF 全文
+                                            </span>
+                                        </template>
+                                        <template x-if="!p.has_pdf">
+                                            <span class="bg-slate-100 text-slate-500 text-xs px-2 py-0.5 rounded">僅摘要 (Abstract)</span>
+                                        </template>
+                                        <span class="text-xs text-slate-400" x-text="p.pub_date"></span>
+                                    </div>
+                                    <h3 class="text-base font-bold text-slate-800 leading-snug hover:text-teal-700 cursor-pointer" @click="openPaperModal(p)" x-text="p.title"></h3>
+                                    <p class="text-xs text-slate-500 mt-1 line-clamp-1"><span class="font-medium">作者：</span><span x-text="p.authors"></span></p>
+                                    <p class="text-xs text-slate-600 mt-0.5"><span class="font-medium text-teal-700">期刊：</span><span x-text="p.journal"></span></p>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="flex items-center gap-2 self-end lg:self-center">
+                                    <button @click="openPaperModal(p)" class="px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-semibold rounded-lg transition">
+                                        <i class="fa-solid fa-circle-info mr-1"></i> 摘要詳情
+                                    </button>
+                                    <template x-if="p.has_pdf">
+                                        <a :href="'/api/papers/' + p.pmid + '/pdf'" target="_blank" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition shadow-sm inline-flex items-center">
+                                            <i class="fa-solid fa-file-pdf mr-1"></i> 閱讀 PDF
+                                        </a>
+                                    </template>
+                                    <template x-if="p.text_path">
+                                        <button @click="viewExtractedText(p.pmid)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition">
+                                            <i class="fa-solid fa-font mr-1"></i> 提取文字
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="filteredPapers.length === 0">
+                        <div class="py-12 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                            <i class="fa-solid fa-inbox text-3xl mb-2 text-slate-300"></i>
+                            <p>查無符合條件的文獻</p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 3: REPORTS VIEWER ================= -->
+        <div x-show="currentTab === 'reports'" class="space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- Left: Reports List Sidebar -->
+                <div class="lg:col-span-1 bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm h-fit">
+                    <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3 px-2 flex items-center justify-between">
+                        <span>歷史日報清單</span>
+                        <span class="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-mono" x-text="reports.length"></span>
+                    </h3>
+                    <div class="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+                        <template x-for="r in reports" :key="r.id">
+                            <div @click="viewReport(r.id)" :class="selectedReport && selectedReport.id === r.id ? 'bg-teal-50 border-teal-500 text-teal-900 font-semibold' : 'hover:bg-slate-50 border-transparent text-slate-700'"
+                                 class="p-3 rounded-xl border cursor-pointer transition text-xs flex flex-col gap-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-mono bg-white px-2 py-0.5 rounded border border-slate-200 text-[11px]" x-text="r.date_str"></span>
+                                    <span class="text-slate-400 text-[10px]" x-text="r.created_at ? r.created_at.substring(11, 16) : ''"></span>
+                                </div>
+                                <div class="line-clamp-2 mt-1" x-text="r.title"></div>
+                            </div>
+                        </template>
+                        <template x-if="reports.length === 0">
+                            <div class="text-center py-6 text-slate-400 text-xs">尚無任何綜述報告</div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Right: Markdown / HTML Viewer -->
+                <div class="lg:col-span-3 bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm min-h-[600px]">
+                    <template x-if="selectedReport">
+                        <div>
+                            <!-- Header Tools -->
+                            <div class="flex flex-wrap items-center justify-between pb-4 mb-6 border-b border-slate-200 gap-4">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="bg-teal-100 text-teal-800 text-xs font-mono font-bold px-2.5 py-0.5 rounded" x-text="selectedReport.date_str"></span>
+                                        <span class="text-xs text-slate-400" x-text="'產生時間：' + (selectedReport.created_at || '').replace('T', ' ').substring(0, 19)"></span>
+                                    </div>
+                                    <h2 class="text-xl font-extrabold text-slate-900" x-text="selectedReport.title"></h2>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <template x-if="selectedReport.github_url">
+                                        <a :href="selectedReport.github_url" target="_blank" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition inline-flex items-center gap-1 shadow-sm">
+                                            <i class="fa-brands fa-github"></i> 前往 GitHub Pages
+                                        </a>
+                                    </template>
+                                    <a :href="'/docs-site/reports/' + selectedReport.date_str + '.html'" target="_blank" class="px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1">
+                                        <i class="fa-solid fa-arrow-up-right-from-square"></i> 開啟獨立頁面
+                                    </a>
+                                    <button @click="copyReportMarkdown()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1">
+                                        <i class="fa-regular fa-copy"></i> 複製 Markdown
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Markdown Body -->
+                            <div class="prose max-w-none" x-html="renderedMarkdown"></div>
+                        </div>
+                    </template>
+                    <template x-if="!selectedReport">
+                        <div class="h-full flex flex-col items-center justify-center py-20 text-slate-400">
+                            <i class="fa-regular fa-newspaper text-5xl mb-3 text-slate-300"></i>
+                            <p class="text-base font-medium">請從左側選取欲查閱的文獻綜述日報</p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 4: SETTINGS ================= -->
+        <div x-show="currentTab === 'settings'" class="space-y-6 max-w-4xl mx-auto">
+            <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-8">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-teal-600"></i> 系統整體參數設定
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-1">自訂檢索關鍵字、每日定時排程、Ollama 模型、GitHub Pages 連線等</p>
+                </div>
+
+                <!-- Section 1: PubMed & Schedule -->
+                <div class="space-y-4 pt-4 border-t border-slate-100">
+                    <h3 class="text-sm font-bold text-teal-800 uppercase tracking-wider">🔬 PubMed 檢索與排程</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">PubMed 檢索關鍵字 (Query)</label>
+                            <input type="text" x-model="config.pubmed_query" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                            <p class="text-[11px] text-slate-400 mt-1">例如: galectin, galectin-3 cancer, galectin-9 immune</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">每日處理文獻目標篇數</label>
+                            <input type="number" min="1" max="20" x-model.number="config.max_papers_per_run" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                            <p class="text-[11px] text-slate-400 mt-1">預設為 5 篇（自動過濾重複）</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">每日排程執行時間 (時:分)</label>
+                            <div class="flex items-center gap-2">
+                                <select x-model.number="config.schedule_hour" class="px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none flex-1">
+                                    <template x-for="h in 24" :key="h-1">
+                                        <option :value="h-1" x-text="String(h-1).padStart(2, '0') + ' 時'"></option>
+                                    </template>
+                                </select>
+                                <span class="font-bold text-slate-400">:</span>
+                                <select x-model.number="config.schedule_minute" class="px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none flex-1">
+                                    <template x-for="m in [0, 10, 15, 20, 30, 40, 45, 50]" :key="m">
+                                        <option :value="m" x-text="String(m).padStart(2, '0') + ' 分'"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-1">預設為每天早上 02:00 AM</p>
+                        </div>
+                        <div class="flex items-center pt-6">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" x-model="config.schedule_enabled" class="w-4 h-4 text-teal-600 rounded focus:ring-teal-500" />
+                                <span class="text-sm font-semibold text-slate-700">啟用每日自動定時執行</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Ollama LLM -->
+                <div class="space-y-4 pt-4 border-t border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-purple-800 uppercase tracking-wider">🤖 Ollama 本地模型設定</h3>
+                        <button @click="testOllama()" class="text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold px-2.5 py-1 rounded-md transition">
+                            <i class="fa-solid fa-plug mr-1"></i> 測試連線與載入可用模型
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Ollama API 位址</label>
+                            <input type="text" x-model="config.ollama_base_url" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">選擇模型 (Model)</label>
+                            <div class="flex gap-2">
+                                <input type="text" x-model="config.ollama_model" placeholder="llama3, mistral, qwen2.5..." class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                                <template x-if="ollamaModels.length > 0">
+                                    <select @change="config.ollama_model = $event.target.value" class="px-2 py-2 text-xs bg-slate-100 border border-slate-300 rounded-lg">
+                                        <option value="">選擇已安裝</option>
+                                        <template x-for="m in ollamaModels" :key="m">
+                                            <option :value="m" x-text="m"></option>
+                                        </template>
+                                    </select>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">系統提示詞 (System Prompt)</label>
+                            <textarea rows="3" x-model="config.system_prompt" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: GitHub Pages -->
+                <div class="space-y-4 pt-4 border-t border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-indigo-800 uppercase tracking-wider">🌐 GitHub Pages 自動發布設定</h3>
+                        <button @click="testGitHub()" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-2.5 py-1 rounded-md transition">
+                            <i class="fa-brands fa-github mr-1"></i> 測試 GitHub 連線
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">GitHub Personal Access Token (PAT)</label>
+                            <input type="password" x-model="config.github_token" placeholder="ghp_xxxxxxxxxxxx" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none font-mono" />
+                            <p class="text-[11px] text-slate-400 mt-1">需具備 <code>repo</code> 寫入權限</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">倉庫名稱 (Repository)</label>
+                            <input type="text" x-model="config.github_repo" placeholder="帳號/倉庫名 如: yourname/galectin-digest" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">發布分支 (Branch)</label>
+                            <input type="text" x-model="config.github_branch" placeholder="main 或 gh-pages" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">發布資料夾 (Folder)</label>
+                            <input type="text" x-model="config.github_folder" placeholder="docs" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                            <p class="text-[11px] text-slate-400 mt-1">若使用 GitHub Pages 設為 docs 即可</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Action Button -->
+                <div class="pt-6 border-t border-slate-200 flex items-center justify-end gap-3">
+                    <button @click="saveSettings()" class="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow transition flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> 儲存所有設定
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 5: SYSTEM LOGS ================= -->
+        <div x-show="currentTab === 'logs'" class="space-y-4">
+            <div class="bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-800 text-slate-200 font-mono">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+                    <h3 class="text-base font-bold text-teal-400 flex items-center gap-2">
+                        <i class="fa-solid fa-terminal"></i> 系統完整運行紀錄 (System Logs)
+                    </h3>
+                    <button @click="fetchLogs()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded transition">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> 重新整理
+                    </button>
+                </div>
+                <div class="space-y-1.5 text-xs overflow-y-auto max-h-[600px]">
+                    <template x-for="l in logs" :key="l.id">
+                        <div class="leading-relaxed hover:bg-slate-800/60 p-1 rounded">
+                            <span class="text-slate-500" x-text="l.created_at ? l.created_at.replace('T', ' ').substring(0, 19) : ''"></span>
+                            <span :class="{
+                                'text-emerald-400': l.level === 'INFO',
+                                'text-amber-400': l.level === 'WARNING',
+                                'text-rose-400 font-bold': l.level === 'ERROR'
+                            }" class="font-bold px-1" x-text="'[' + l.level + ']'"></span>
+                            <span class="text-slate-100" x-text="l.message"></span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal for Paper Detail -->
+    <div x-show="paperModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" @click.self="paperModalOpen = false">
+        <div class="bg-white rounded-2xl max-w-3xl w-full p-6 sm:p-8 max-h-[85vh] overflow-y-auto shadow-2xl relative">
+            <button @click="paperModalOpen = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <template x-if="activePaper">
+                <div class="space-y-4">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="bg-teal-50 text-teal-700 font-mono font-bold text-xs px-2.5 py-1 rounded border border-teal-200" x-text="'PMID: ' + activePaper.pmid"></span>
+                        <template x-if="activePaper.pmcid">
+                            <span class="bg-indigo-50 text-indigo-700 font-mono text-xs px-2.5 py-1 rounded border border-indigo-200" x-text="activePaper.pmcid"></span>
+                        </template>
+                        <template x-if="activePaper.doi">
+                            <span class="bg-slate-100 text-slate-600 font-mono text-xs px-2.5 py-1 rounded" x-text="'DOI: ' + activePaper.doi"></span>
+                        </template>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900" x-text="activePaper.title"></h3>
+                    <div class="text-xs text-slate-500 space-y-1">
+                        <p><span class="font-semibold text-slate-700">作者：</span><span x-text="activePaper.authors"></span></p>
+                        <p><span class="font-semibold text-slate-700">期刊與發表：</span><span x-text="activePaper.journal + ' (' + activePaper.pub_date + ')'"></span></p>
+                    </div>
+                    <div class="pt-4 border-t border-slate-200">
+                        <h4 class="text-sm font-bold text-slate-800 mb-2">論文摘要 (Abstract)</h4>
+                        <div class="bg-slate-50 p-4 rounded-xl text-xs leading-relaxed text-slate-700 whitespace-pre-line border border-slate-200" x-text="activePaper.abstract || '（無摘要資料）'"></div>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+                        <template x-if="activePaper.has_pdf">
+                            <a :href="'/api/papers/' + activePaper.pmid + '/pdf'" target="_blank" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition inline-flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-pdf"></i> 開啟下載的 PDF 全文
+                            </a>
+                        </template>
+                        <a :href="'https://pubmed.ncbi.nlm.nih.gov/' + activePaper.pmid" target="_blank" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1.5">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> 在 PubMed 查看
+                        </a>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Modal for Extracted Text -->
+    <div x-show="textModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" @click.self="textModalOpen = false">
+        <div class="bg-white rounded-2xl max-w-3xl w-full p-6 sm:p-8 max-h-[85vh] overflow-y-auto shadow-2xl relative">
+            <button @click="textModalOpen = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-font text-teal-600"></i> PDF 提取之純文字內容
+            </h3>
+            <div class="bg-slate-900 text-slate-100 p-4 rounded-xl text-xs font-mono whitespace-pre-wrap max-h-[500px] overflow-y-auto" x-text="extractedText"></div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div x-show="toast.show" x-transition class="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-3 text-sm">
+        <i :class="toast.type === 'success' ? 'fa-solid fa-circle-check text-emerald-400' : 'fa-solid fa-circle-exclamation text-rose-400'"></i>
+        <span x-text="toast.message"></span>
+    </div>
+
+    <script>
+        function app() {
+            return {
+                currentTab: 'overview',
+                status: {},
+                stats: { total_papers: 0 },
+                config: {},
+                papers: [],
+                paperSearch: '',
+                reports: [],
+                selectedReport: null,
+                renderedMarkdown: '',
+                logs: [],
+                ollamaModels: [],
+                paperModalOpen: false,
+                activePaper: null,
+                textModalOpen: false,
+                extractedText: '',
+                toast: { show: false, message: '', type: 'success' },
+
+                get filteredPapers() {
+                    if (!this.paperSearch.trim()) return this.papers;
+                    const q = this.paperSearch.toLowerCase();
+                    return this.papers.filter(p => 
+                        (p.title && p.title.toLowerCase().includes(q)) ||
+                        (p.pmid && p.pmid.includes(q)) ||
+                        (p.journal && p.journal.toLowerCase().includes(q)) ||
+                        (p.authors && p.authors.toLowerCase().includes(q))
+                    );
+                },
+
+                initApp() {
+                    this.fetchStatus();
+                    this.fetchConfig();
+                    this.fetchPapers();
+                    this.fetchReports();
+                    this.fetchLogs();
+                    
+                    // Poll status and logs every 3 seconds
+                    setInterval(() => {
+                        this.fetchStatus();
+                        if (this.currentTab === 'logs') this.fetchLogs();
+                    }, 3000);
+                },
+
+                showToast(msg, type = 'success') {
+                    this.toast = { show: true, message: msg, type: type };
+                    setTimeout(() => { this.toast.show = false; }, 3500);
+                },
+
+                async fetchStatus() {
+                    try {
+                        const res = await fetch('/api/status');
+                        const data = await res.json();
+                        this.status = data;
+                        this.stats.total_papers = data.total_papers;
+                        if (!this.config.pubmed_query && data.config) {
+                            this.config = data.config;
+                        }
+                    } catch (e) {
+                        console.error('Fetch status error:', e);
+                    }
+                },
+
+                async fetchConfig() {
+                    try {
+                        const res = await fetch('/api/config');
+                        this.config = await res.json();
+                    } catch (e) {
+                        console.error('Fetch config error:', e);
+                    }
+                },
+
+                async saveSettings() {
+                    try {
+                        const res = await fetch('/api/config', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.config)
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showToast('設定已成功儲存並生效！');
+                            this.fetchStatus();
+                        } else {
+                            this.showToast('儲存失敗', 'error');
+                        }
+                    } catch (e) {
+                        this.showToast('連線異常: ' + e, 'error');
+                    }
+                },
+
+                async triggerRun() {
+                    try {
+                        const res = await fetch('/api/run', { method: 'POST' });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showToast('已啟動文獻搜尋與分析！');
+                            this.fetchStatus();
+                        } else {
+                            this.showToast(data.message, 'error');
+                        }
+                    } catch (e) {
+                        this.showToast('啟動失敗: ' + e, 'error');
+                    }
+                },
+
+                async fetchPapers() {
+                    try {
+                        const res = await fetch('/api/papers?limit=100');
+                        const data = await res.json();
+                        this.papers = data.papers || [];
+                        this.stats.total_papers = data.total;
+                    } catch (e) {
+                        console.error('Fetch papers error:', e);
+                    }
+                },
+
+                async fetchReports() {
+                    try {
+                        const res = await fetch('/api/reports?limit=50');
+                        this.reports = await res.json();
+                        if (this.reports.length > 0 && !this.selectedReport) {
+                            this.viewReport(this.reports[0].id);
+                        }
+                    } catch (e) {
+                        console.error('Fetch reports error:', e);
+                    }
+                },
+
+                async viewReport(reportId) {
+                    try {
+                        const res = await fetch(`/api/reports/${reportId}`);
+                        if (res.ok) {
+                            this.selectedReport = await res.json();
+                            this.renderedMarkdown = marked.parse(this.selectedReport.markdown_content || '');
+                        }
+                    } catch (e) {
+                        console.error('View report error:', e);
+                    }
+                },
+
+                copyReportMarkdown() {
+                    if (this.selectedReport && this.selectedReport.markdown_content) {
+                        navigator.clipboard.writeText(this.selectedReport.markdown_content);
+                        this.showToast('已複製報告 Markdown 至剪貼簿！');
+                    }
+                },
+
+                openPaperModal(paper) {
+                    this.activePaper = paper;
+                    this.paperModalOpen = true;
+                },
+
+                async viewExtractedText(pmid) {
+                    try {
+                        const res = await fetch(`/api/papers/${pmid}/text`);
+                        const data = await res.json();
+                        this.extractedText = data.content || '無內容';
+                        this.textModalOpen = true;
+                    } catch (e) {
+                        this.showToast('無法讀取提取文字', 'error');
+                    }
+                },
+
+                async fetchLogs() {
+                    try {
+                        const res = await fetch('/api/logs?limit=80');
+                        this.logs = await res.json();
+                    } catch (e) {
+                        console.error('Fetch logs error:', e);
+                    }
+                },
+
+                async testOllama() {
+                    this.showToast('正在測試 Ollama 連線與讀取模型清單...');
+                    try {
+                        const res = await fetch(`/api/ollama/test?base_url=${encodeURIComponent(this.config.ollama_base_url)}&model=${encodeURIComponent(this.config.ollama_model)}`);
+                        const data = await res.json();
+                        if (data.connected) {
+                            this.ollamaModels = data.models || [];
+                            this.showToast(`連線成功！偵測到 ${data.models.length} 個本機模型。`);
+                        } else {
+                            this.showToast('無法連線到 Ollama，請確認服務已啟動。', 'error');
+                        }
+                    } catch (e) {
+                        this.showToast('連線失敗: ' + e, 'error');
+                    }
+                },
+
+                async testGitHub() {
+                    this.showToast('正在驗證 GitHub 倉庫與 Token 權限...');
+                    try {
+                        const res = await fetch(`/api/github/test?token=${encodeURIComponent(this.config.github_token)}&repo=${encodeURIComponent(this.config.github_repo)}&branch=${encodeURIComponent(this.config.github_branch)}`, {
+                            method: 'POST'
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            this.showToast(`GitHub 驗證成功！倉庫：${data.repo_name}`);
+                        } else {
+                            this.showToast(data.error || 'GitHub 驗證失敗', 'error');
+                        }
+                    } catch (e) {
+                        this.showToast('測試失敗: ' + e, 'error');
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
