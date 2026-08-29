@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Galectin 前沿研究日報 | GitHub Pages</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
-    <!-- Header -->
     <header class="bg-gradient-to-r from-teal-800 via-teal-700 to-cyan-800 text-white shadow-lg">
         <div class="max-w-6xl mx-auto px-4 py-12">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
@@ -24,7 +22,7 @@
                 </div>
                 <div class="flex items-center gap-3 bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20">
                     <div class="text-center px-4">
-                        <div class="text-2xl font-bold text-white">7</div>
+                        <div class="text-2xl font-bold text-white">4</div>
                         <div class="text-xs text-teal-200 mt-0.5">累計綜述</div>
                     </div>
                 </div>
@@ -32,21 +30,43 @@
         </div>
     </header>
 
-    <!-- Content & Search -->
     <main class="max-w-6xl mx-auto px-4 py-8">
         <div class="mb-8 flex flex-col sm:flex-row gap-4 items-center justify-between">
             <div class="relative w-full sm:w-80">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="searchInput" placeholder="搜尋歷史報告標題或日期..." 
+                <input type="text" id="searchInput" placeholder="搜尋歷史報告標題或日期..."
                        class="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500" />
             </div>
             <div class="text-sm text-slate-500 self-end sm:self-auto font-medium">
-                顯示共 <span id="reportCount" class="font-bold text-teal-700">7</span> 份報告
+                顯示共 <span id="reportCount" class="font-bold text-teal-700">4</span> 份報告
             </div>
         </div>
 
         <div id="reportsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             
+            <div class="report-card bg-white rounded-xl border border-slate-200 hover:border-teal-500/50 hover:shadow-lg transition-all duration-200 p-6 flex flex-col justify-between" data-title="糖凝集素在免疫、代謝与心脏疾病中的多面角色" data-date="2026-08-30">
+                <div>
+                    <div class="flex items-center justify-between text-xs font-medium text-slate-400 mb-3">
+                        <span class="bg-teal-50 text-teal-700 px-2.5 py-1 rounded-md border border-teal-200/60 font-mono">
+                            <i class="fa-regular fa-calendar mr-1"></i>2026-08-30
+                        </span>
+                        <span><i class="fa-solid fa-file-pdf mr-1 text-teal-600"></i>5 篇論文</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800 hover:text-teal-700 transition mb-3 line-clamp-2">
+                        <a href="reports/2026-08-30.html">糖凝集素在免疫、代謝与心脏疾病中的多面角色</a>
+                    </h3>
+                </div>
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-between mt-4">
+                    <span class="text-xs text-slate-400 font-mono">
+                        <i class="fa-regular fa-clock mr-1"></i>2026-08-30 07:01:21
+                    </span>
+                    <a href="reports/2026-08-30.html" class="inline-flex items-center text-sm font-semibold text-teal-600 hover:text-teal-800 transition">
+                        閱讀報告 <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
+                    </a>
+                </div>
+            </div>
+            
+
             <div class="report-card bg-white rounded-xl border border-slate-200 hover:border-teal-500/50 hover:shadow-lg transition-all duration-200 p-6 flex flex-col justify-between" data-title="galectin 前沿研究動態與文獻綜述日報 (2026-08-29)" data-date="2026-08-29">
                 <div>
                     <div class="flex items-center justify-between text-xs font-medium text-slate-400 mb-3">
@@ -61,7 +81,7 @@
                 </div>
                 <div class="pt-4 border-t border-slate-100 flex items-center justify-between mt-4">
                     <span class="text-xs text-slate-400 font-mono">
-                        <i class="fa-regular fa-clock mr-1"></i>2026-08-29 02:01:46
+                        <i class="fa-regular fa-clock mr-1"></i>2026-08-29 00:00:00
                     </span>
                     <a href="reports/2026-08-29.html" class="inline-flex items-center text-sm font-semibold text-teal-600 hover:text-teal-800 transition">
                         閱讀報告 <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
@@ -69,6 +89,7 @@
                 </div>
             </div>
             
+
             <div class="report-card bg-white rounded-xl border border-slate-200 hover:border-teal-500/50 hover:shadow-lg transition-all duration-200 p-6 flex flex-col justify-between" data-title="galectin 前沿研究動態與文獻綜述日報 (2026-08-28)" data-date="2026-08-28">
                 <div>
                     <div class="flex items-center justify-between text-xs font-medium text-slate-400 mb-3">
@@ -83,7 +104,7 @@
                 </div>
                 <div class="pt-4 border-t border-slate-100 flex items-center justify-between mt-4">
                     <span class="text-xs text-slate-400 font-mono">
-                        <i class="fa-regular fa-clock mr-1"></i>2026-08-28 08:59:16
+                        <i class="fa-regular fa-clock mr-1"></i>2026-08-28 00:00:00
                     </span>
                     <a href="reports/2026-08-28.html" class="inline-flex items-center text-sm font-semibold text-teal-600 hover:text-teal-800 transition">
                         閱讀報告 <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
@@ -91,6 +112,7 @@
                 </div>
             </div>
             
+
             <div class="report-card bg-white rounded-xl border border-slate-200 hover:border-teal-500/50 hover:shadow-lg transition-all duration-200 p-6 flex flex-col justify-between" data-title="galectin 前沿研究動態與文獻綜述日報 (2026-08-27)" data-date="2026-08-27">
                 <div>
                     <div class="flex items-center justify-between text-xs font-medium text-slate-400 mb-3">
@@ -105,95 +127,7 @@
                 </div>
                 <div class="pt-4 border-t border-slate-100 flex items-center justify-between mt-4">
                     <span class="text-xs text-slate-400 font-mono">
-                        <i class="fa-regular fa-clock mr-1"></i>2026-08-27 12:14:32
-                    </span>
-                    <a href="reports/2026-08-27.html" class="inline-flex items-center text-sm font-semibold text-teal-600 hover:text-teal-800 transition">
-                        閱讀報告 <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
-                    </a>
-                </div>
-            </div>
-            
-            <div class="report-card bg-white rounded-xl border border-slate-200 hover:border-teal-500/50 hover:shadow-lg transition-all duration-200 p-6 flex flex-col justify-between" data-title="galectin 前沿研究動態與文獻綜述日報 (2026-08-27)" data-date="2026-08-27">
-                <div>
-                    <div class="flex items-center justify-between text-xs font-medium text-slate-400 mb-3">
-                        <span class="bg-teal-50 text-teal-700 px-2.5 py-1 rounded-md border border-teal-200/60 font-mono">
-                            <i class="fa-regular fa-calendar mr-1"></i>2026-08-27
-                        </span>
-                        <span><i class="fa-solid fa-file-pdf mr-1 text-teal-600"></i>5 篇論文</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-slate-800 hover:text-teal-700 transition mb-3 line-clamp-2">
-                        <a href="reports/2026-08-27.html">Galectin 前沿研究動態與文獻綜述日報 (2026-08-27)</a>
-                    </h3>
-                </div>
-                <div class="pt-4 border-t border-slate-100 flex items-center justify-between mt-4">
-                    <span class="text-xs text-slate-400 font-mono">
-                        <i class="fa-regular fa-clock mr-1"></i>2026-08-27 12:07:01
-                    </span>
-                    <a href="reports/2026-08-27.html" class="inline-flex items-center text-sm font-semibold text-teal-600 hover:text-teal-800 transition">
-                        閱讀報告 <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
-                    </a>
-                </div>
-            </div>
-            
-            <div class="report-card bg-white rounded-xl border border-slate-200 hover:border-teal-500/50 hover:shadow-lg transition-all duration-200 p-6 flex flex-col justify-between" data-title="galectin 前沿研究動態與文獻綜述日報 (2026-08-27)" data-date="2026-08-27">
-                <div>
-                    <div class="flex items-center justify-between text-xs font-medium text-slate-400 mb-3">
-                        <span class="bg-teal-50 text-teal-700 px-2.5 py-1 rounded-md border border-teal-200/60 font-mono">
-                            <i class="fa-regular fa-calendar mr-1"></i>2026-08-27
-                        </span>
-                        <span><i class="fa-solid fa-file-pdf mr-1 text-teal-600"></i>5 篇論文</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-slate-800 hover:text-teal-700 transition mb-3 line-clamp-2">
-                        <a href="reports/2026-08-27.html">Galectin 前沿研究動態與文獻綜述日報 (2026-08-27)</a>
-                    </h3>
-                </div>
-                <div class="pt-4 border-t border-slate-100 flex items-center justify-between mt-4">
-                    <span class="text-xs text-slate-400 font-mono">
-                        <i class="fa-regular fa-clock mr-1"></i>2026-08-27 11:56:22
-                    </span>
-                    <a href="reports/2026-08-27.html" class="inline-flex items-center text-sm font-semibold text-teal-600 hover:text-teal-800 transition">
-                        閱讀報告 <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
-                    </a>
-                </div>
-            </div>
-            
-            <div class="report-card bg-white rounded-xl border border-slate-200 hover:border-teal-500/50 hover:shadow-lg transition-all duration-200 p-6 flex flex-col justify-between" data-title="galectin 前沿研究動態與文獻綜述日報 (2026-08-27)" data-date="2026-08-27">
-                <div>
-                    <div class="flex items-center justify-between text-xs font-medium text-slate-400 mb-3">
-                        <span class="bg-teal-50 text-teal-700 px-2.5 py-1 rounded-md border border-teal-200/60 font-mono">
-                            <i class="fa-regular fa-calendar mr-1"></i>2026-08-27
-                        </span>
-                        <span><i class="fa-solid fa-file-pdf mr-1 text-teal-600"></i>5 篇論文</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-slate-800 hover:text-teal-700 transition mb-3 line-clamp-2">
-                        <a href="reports/2026-08-27.html">Galectin 前沿研究動態與文獻綜述日報 (2026-08-27)</a>
-                    </h3>
-                </div>
-                <div class="pt-4 border-t border-slate-100 flex items-center justify-between mt-4">
-                    <span class="text-xs text-slate-400 font-mono">
-                        <i class="fa-regular fa-clock mr-1"></i>2026-08-27 11:25:54
-                    </span>
-                    <a href="reports/2026-08-27.html" class="inline-flex items-center text-sm font-semibold text-teal-600 hover:text-teal-800 transition">
-                        閱讀報告 <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
-                    </a>
-                </div>
-            </div>
-            
-            <div class="report-card bg-white rounded-xl border border-slate-200 hover:border-teal-500/50 hover:shadow-lg transition-all duration-200 p-6 flex flex-col justify-between" data-title="galectin 前沿研究動態與文獻綜述日報 (2026-08-27)" data-date="2026-08-27">
-                <div>
-                    <div class="flex items-center justify-between text-xs font-medium text-slate-400 mb-3">
-                        <span class="bg-teal-50 text-teal-700 px-2.5 py-1 rounded-md border border-teal-200/60 font-mono">
-                            <i class="fa-regular fa-calendar mr-1"></i>2026-08-27
-                        </span>
-                        <span><i class="fa-solid fa-file-pdf mr-1 text-teal-600"></i>5 篇論文</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-slate-800 hover:text-teal-700 transition mb-3 line-clamp-2">
-                        <a href="reports/2026-08-27.html">Galectin 前沿研究動態與文獻綜述日報 (2026-08-27)</a>
-                    </h3>
-                </div>
-                <div class="pt-4 border-t border-slate-100 flex items-center justify-between mt-4">
-                    <span class="text-xs text-slate-400 font-mono">
-                        <i class="fa-regular fa-clock mr-1"></i>2026-08-27 11:23:15
+                        <i class="fa-regular fa-clock mr-1"></i>2026-08-27 00:00:00
                     </span>
                     <a href="reports/2026-08-27.html" class="inline-flex items-center text-sm font-semibold text-teal-600 hover:text-teal-800 transition">
                         閱讀報告 <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
@@ -202,7 +136,7 @@
             </div>
             
         </div>
-        
+
         <footer class="text-center text-slate-400 text-sm py-12 mt-8 border-t border-slate-200">
             <p>🤖 自動化維護於 GitHub Pages • 由 PubMed & Ollama LLM 驅動</p>
         </footer>
@@ -212,7 +146,6 @@
         const searchInput = document.getElementById('searchInput');
         const cards = document.querySelectorAll('.report-card');
         const countSpan = document.getElementById('reportCount');
-
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
                 const val = e.target.value.toLowerCase().trim();
