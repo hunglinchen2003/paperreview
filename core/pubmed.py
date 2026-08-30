@@ -1,7 +1,8 @@
+import re
+import time
 import xml.etree.ElementTree as ET
 from typing import List, Dict, Any, Optional
 import requests
-import time
 
 NCBI_ESEARCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
 NCBI_EFETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
@@ -21,14 +22,18 @@ class PubMedSearcher:
         Search PubMed for recent articles matching the query.
         Returns list of PMIDs sorted by publication date (most recent first).
         """
+        term = query.strip()
+        # Keep user keywords, but prefer title/abstract matches for a topical digest.
+        if "[" not in term:
+            term = f"{term}[Title/Abstract]"
         params = {
             "db": "pubmed",
-            "term": query,
+            "term": term,
             "sort": "pub_date",
             "retmax": max_results,
             "retmode": "json",
             "email": self.email,
-            "tool": self.tool_name
+            "tool": self.tool_name,
         }
         try:
             resp = self.session.get(NCBI_ESEARCH_URL, params=params, timeout=15)
@@ -146,68 +151,130 @@ class PubMedSearcher:
             print(f"[PubMed] XML root parsing error: {e}")
         return papers
 
-    def resolve_open_access_pdf_url(self, pmid: str, pmcid: Optional[str] = None, doi: Optional[str] = None) -> Optional[str]:
-        """
-        Attempt to resolve direct Open Access PDF download URL from Europe PMC, NCBI PMC, or Unpaywall.
-        """
-        # 1. Check Europe PMC API
+    def collect_pdf_candidates(
+        self, pmid: str, pmcid: Optional[str] = None, doi: Optional[str] = None
+    ) -> List[str]:
+        """Collect candidate Open Access PDF URLs (Europe PMC, Unpaywall, Semantic Scholar)."""
+        urls: List[str] = []
+        seen = set()
+
+        def add(url: Optional[str]):
+            if not url:
+                return
+            url = url.strip()
+            if url and url not in seen:
+                seen.add(url)
+                urls.append(url)
+
         try:
-            query = f"EXT_ID:{pmid} src:med"
             params = {
-                "query": query,
+                "query": f"EXT_ID:{pmid} src:med",
                 "format": "json",
-                "resultType": "core"
+                "resultType": "core",
             }
-            resp = self.session.get(EUROPE_PMC_SEARCH_URL, params=params, timeout=10)
+            resp = self.session.get(EUROPE_PMC_SEARCH_URL, params=params, timeout=12)
             if resp.status_code == 200:
-                data = resp.json()
-                results = data.get("resultList", {}).get("result", [])
+                results = resp.json().get("resultList", {}).get("result", [])
                 if results:
                     res = results[0]
-                    # Check for direct PDF links in fullTextUrlList
-                    url_list = res.get("fullTextUrlList", {}).get("fullTextUrl", [])
-                    for u in url_list:
-                        if u.get("documentStyle") == "pdf" or u.get("url", "").lower().endswith(".pdf"):
-                            return u.get("url")
-                    
-                    # If PMC ID is discovered
                     found_pmcid = res.get("pmcid")
                     if found_pmcid and not pmcid:
                         pmcid = found_pmcid
+                    for u in res.get("fullTextUrlList", {}).get("fullTextUrl", []) or []:
+                        style = (u.get("documentStyle") or "").lower()
+                        href = u.get("url") or ""
+                        if style == "pdf" or href.lower().endswith(".pdf"):
+                            add(href)
         except Exception as e:
             print(f"[PubMed] Europe PMC resolution error for PMID {pmid}: {e}")
 
-        # 2. Check PMC direct link if PMCID exists
         if pmcid:
-            clean_pmc = pmcid if pmcid.startswith("PMC") else f"PMC{pmcid}"
-            # Europe PMC direct PDF download URL format
-            europe_pmc_pdf = f"https://europepmc.org/backend/ptpmcrender.fcgi?accid={clean_pmc}&blobtype=pdf"
-            return europe_pmc_pdf
+            clean_pmc = pmcid if str(pmcid).upper().startswith("PMC") else f"PMC{pmcid}"
+            add(f"https://europepmc.org/backend/ptpmcrender.fcgi?accid={clean_pmc}&blobtype=pdf")
+            add(f"https://europepmc.org/articles/{clean_pmc}?pdf=render")
 
-        # 3. Check Unpaywall if DOI exists
         if doi:
             try:
-                unpaywall_url = f"https://api.unpaywall.org/v2/{doi}?email={self.email}"
-                resp = self.session.get(unpaywall_url, timeout=10)
+                resp = self.session.get(
+                    f"https://api.unpaywall.org/v2/{doi}",
+                    params={"email": self.email},
+                    timeout=10,
+                )
                 if resp.status_code == 200:
-                    data = resp.json()
-                    best_oa = data.get("best_oa_location") or {}
-                    pdf_url = best_oa.get("url_for_pdf")
-                    if pdf_url:
-                        return pdf_url
+                    best_oa = resp.json().get("best_oa_location") or {}
+                    add(best_oa.get("url_for_pdf"))
             except Exception as e:
                 print(f"[PubMed] Unpaywall resolution error for DOI {doi}: {e}")
 
-        # 4. Check Semantic Scholar
         try:
-            ss_url = f"https://api.semanticscholar.org/graph/v1/paper/PMID:{pmid}?fields=openAccessPdf"
-            resp = self.session.get(ss_url, timeout=10)
+            resp = self.session.get(
+                f"https://api.semanticscholar.org/graph/v1/paper/PMID:{pmid}",
+                params={"fields": "openAccessPdf"},
+                timeout=10,
+            )
             if resp.status_code == 200:
-                data = resp.json()
-                oa_pdf = data.get("openAccessPdf")
-                if oa_pdf and oa_pdf.get("url"):
-                    return oa_pdf.get("url")
+                oa_pdf = resp.json().get("openAccessPdf") or {}
+                add(oa_pdf.get("url"))
         except Exception:
             pass
 
-        return None
+        return urls
+
+    def resolve_open_access_pdf_url(
+        self, pmid: str, pmcid: Optional[str] = None, doi: Optional[str] = None
+    ) -> Optional[str]:
+        urls = self.collect_pdf_candidates(pmid=pmid, pmcid=pmcid, doi=doi)
+        return urls[0] if urls else None
+
+    def fetch_pmc_fulltext(self, pmcid: str) -> Optional[str]:
+        """Fetch OA full text via Europe PMC JATS XML and flatten to plain text."""
+        if not pmcid:
+            return None
+        clean = pmcid if str(pmcid).upper().startswith("PMC") else f"PMC{pmcid}"
+        url = f"https://www.ebi.ac.uk/europepmc/webservices/rest/{clean}/fullTextXML"
+        try:
+            resp = self.session.get(url, timeout=20)
+            if resp.status_code != 200 or not resp.text.strip().startswith("<"):
+                return None
+            return self._jats_to_text(resp.text)
+        except Exception as e:
+            print(f"[PubMed] PMC full-text XML error for {pmcid}: {e}")
+            return None
+
+    def _jats_to_text(self, xml_content: str) -> Optional[str]:
+        try:
+            root = ET.fromstring(xml_content)
+        except ET.ParseError:
+            return None
+
+        parts: List[str] = []
+        title = root.findtext(".//article-title")
+        if title:
+            parts.append(title.strip())
+
+        for abstract in root.findall(".//abstract"):
+            text = " ".join("".join(abstract.itertext()).split())
+            if text:
+                parts.append("Abstract\n" + text)
+
+        for sec in root.findall(".//body//sec"):
+            heading = sec.findtext("title") or ""
+            paragraphs = []
+            for p in sec.findall("p"):
+                t = " ".join("".join(p.itertext()).split())
+                if t:
+                    paragraphs.append(t)
+            body = "\n".join(paragraphs).strip()
+            if heading or body:
+                parts.append(f"{heading.strip()}\n{body}".strip())
+
+        if len(parts) < 2:
+            # Fallback: dump all body paragraphs
+            for p in root.findall(".//body//p"):
+                t = " ".join("".join(p.itertext()).split())
+                if t:
+                    parts.append(t)
+
+        text = "\n\n".join(parts).strip()
+        text = re.sub(r"\n{3,}", "\n\n", text)
+        return text if len(text) > 200 else None

@@ -9,7 +9,7 @@ if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
-from fastapi import FastAPI, Request, Form, BackgroundTasks, HTTPException
+from fastapi import FastAPI, Request, BackgroundTasks, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -68,7 +68,16 @@ async def get_system_status():
     })
 
 @app.post("/api/run")
-async def trigger_run(custom_query: Optional[str] = None, max_papers: Optional[int] = None):
+async def trigger_run(request: Request):
+    custom_query = None
+    max_papers = None
+    try:
+        body = await request.json()
+        if isinstance(body, dict):
+            custom_query = body.get("custom_query")
+            max_papers = body.get("max_papers")
+    except Exception:
+        pass
     started = runner.start_pipeline_async(custom_query=custom_query, max_papers=max_papers)
     if not started:
         return JSONResponse({"success": False, "message": "任務已在執行中，請稍候！"}, status_code=400)
@@ -168,5 +177,18 @@ async def test_github(token: Optional[str] = None, repo: Optional[str] = None, b
     return JSONResponse(res)
 
 if __name__ == "__main__":
+    import argparse
     import uvicorn
-    uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=True)
+
+    parser = argparse.ArgumentParser(description="PubMed + Ollama literature digest WebUI")
+    parser.add_argument("--once", action="store_true", help="Run the daily pipeline once and exit")
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=8000)
+    args = parser.parse_args()
+
+    if args.once:
+        result = runner.run_once()
+        print(result)
+        raise SystemExit(0 if result.get("success") else 1)
+
+    uvicorn.run("app:app", host=args.host, port=args.port, reload=False)

@@ -22,7 +22,13 @@
         .prose blockquote { border-left: 4px solid #0d9488; padding-left: 1rem; color: #475569; font-style: italic; margin: 1rem 0; }
         .prose strong { color: #0f172a; font-weight: 600; }
         .prose code { background-color: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; color: #0f766e; }
-        .prose hr { margin: 1.5rem 0; border-color: #e2e8f0; }
+        .prose table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+        .prose th { background: #f0fdfa; text-align: left; padding: 0.5rem 0.65rem; border: 1px solid #cbd5e1; }
+        .prose td { padding: 0.5rem 0.65rem; border: 1px solid #e2e8f0; vertical-align: top; }
+        .prose a { color: #0f766e; text-decoration: underline; }
+        .lang-zh .report-lang[data-lang="en"] { display: none; }
+        .lang-en .report-lang[data-lang="zh"] { display: none; }
+        .lang-btn.active { background: #0f766e; color: #fff; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen font-sans" x-data="app()" x-init="initApp()" x-cloak>
@@ -104,14 +110,14 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">每日排程時間</p>
-                            <h3 class="text-2xl font-bold text-slate-800 mt-1" x-text="config.schedule_hour + ':' + String(config.schedule_minute).padStart(2, '0') + ' AM'">02:00 AM</h3>
+                            <h3 class="text-2xl font-bold text-slate-800 mt-1" x-text="String(config.schedule_hour).padStart(2,'0') + ':' + String(config.schedule_minute).padStart(2, '0')">02:00</h3>
                         </div>
                         <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-xl">
                             <i class="fa-regular fa-clock"></i>
                         </div>
                     </div>
                     <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                        <span class="text-slate-500">下次執行：<span class="font-mono text-teal-700" x-text="status.scheduler ? (status.scheduler.next_run_time || '未排程') : '讀取中...'"></span></span>
+                        <span class="text-slate-500">下次執行（台北時間）：<span class="font-mono text-teal-700" x-text="status.scheduler ? (status.scheduler.next_run_time || '未排程') : '讀取中...'"></span></span>
                         <span :class="config.schedule_enabled ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400 bg-slate-100'" class="px-2 py-0.5 rounded text-[11px] font-semibold" x-text="config.schedule_enabled ? '已啟用' : '已停用'"></span>
                     </div>
                 </div>
@@ -161,8 +167,8 @@
                         </div>
                     </div>
                     <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                        <a href="/docs-site/index.html" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-semibold inline-flex items-center gap-1">
-                            預覽本地 Pages <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        <a href="https://hunglinchen2003.github.io/paperreview/" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-semibold inline-flex items-center gap-1">
+                            線上 GitHub Pages <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
                         </a>
                         <span class="text-slate-400 font-mono" x-text="reports.length + ' 份報告'"></span>
                     </div>
@@ -176,10 +182,15 @@
                         <div class="inline-flex items-center gap-2 bg-teal-500/20 text-teal-300 px-3 py-1 rounded-full text-xs font-semibold border border-teal-500/30 mb-2">
                             <i class="fa-solid fa-bolt text-teal-400"></i> 一鍵自動化流水線
                         </div>
-                        <h2 class="text-2xl font-black tracking-tight">立即檢索 PubMed 並產出最新 Galectin 綜述報告</h2>
+                        <h2 class="text-2xl font-black tracking-tight">立即檢索 PubMed 並產出中英雙語綜述</h2>
                         <p class="text-teal-100/80 text-sm mt-1 max-w-2xl">
-                            點擊按鈕將立即執行：檢索 PubMed 最新文獻 ➔ 比對去重 ➔ 下載 Open Access PDF ➔ 解析全文文字 ➔ 呼叫 Ollama 模型撰寫報告 ➔ 發布至 GitHub Pages。
+                            PubMed 最新文獻 → 去重 → 開放全文 PDF／PMC → 本機 Ollama（預設 gpt-oss:20b）→ 中英報告（含期刊、日期、PMID 連結）→ GitHub Pages。
                         </p>
+                        <div class="mt-4 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                            <label class="text-xs text-teal-200 whitespace-nowrap">主題 / Topic</label>
+                            <input type="text" x-model="config.pubmed_query" placeholder="galectin"
+                                   class="px-3 py-2 rounded-lg text-sm text-slate-900 w-full sm:w-72" />
+                        </div>
                     </div>
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                         <button @click="triggerRun()" :disabled="status.runner && status.runner.is_running" 
@@ -298,7 +309,7 @@
                             <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
                                 <div class="flex-1">
                                     <div class="flex flex-wrap items-center gap-2 mb-2">
-                                        <span class="bg-teal-50 text-teal-700 font-mono font-bold text-xs px-2.5 py-0.5 rounded border border-teal-200" x-text="'PMID: ' + p.pmid"></span>
+                                        <a :href="'https://pubmed.ncbi.nlm.nih.gov/' + p.pmid + '/'" target="_blank" class="bg-teal-50 text-teal-700 font-mono font-bold text-xs px-2.5 py-0.5 rounded border border-teal-200 hover:bg-teal-100" x-text="'PMID: ' + p.pmid"></a>
                                         <template x-if="p.pmcid">
                                             <span class="bg-indigo-50 text-indigo-700 font-mono text-xs px-2.5 py-0.5 rounded border border-indigo-200" x-text="p.pmcid"></span>
                                         </template>
@@ -386,6 +397,11 @@
                                     <h2 class="text-xl font-extrabold text-slate-900" x-text="selectedReport.title"></h2>
                                 </div>
                                 <div class="flex items-center gap-2">
+                                    <div class="bg-slate-100 rounded-lg p-0.5 flex text-xs font-semibold">
+                                        <button type="button" @click="reportLang = 'both'" :class="reportLang === 'both' ? 'lang-btn active px-2.5 py-1 rounded-md' : 'px-2.5 py-1 rounded-md text-slate-600'">中英</button>
+                                        <button type="button" @click="reportLang = 'zh'" :class="reportLang === 'zh' ? 'lang-btn active px-2.5 py-1 rounded-md' : 'px-2.5 py-1 rounded-md text-slate-600'">中文</button>
+                                        <button type="button" @click="reportLang = 'en'" :class="reportLang === 'en' ? 'lang-btn active px-2.5 py-1 rounded-md' : 'px-2.5 py-1 rounded-md text-slate-600'">EN</button>
+                                    </div>
                                     <template x-if="selectedReport.github_url">
                                         <a :href="selectedReport.github_url" target="_blank" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition inline-flex items-center gap-1 shadow-sm">
                                             <i class="fa-brands fa-github"></i> 前往 GitHub Pages
@@ -401,7 +417,7 @@
                             </div>
 
                             <!-- Markdown Body -->
-                            <div class="prose max-w-none" x-html="renderedMarkdown"></div>
+                            <div class="prose max-w-none" :class="'lang-' + reportLang" x-html="renderedMarkdown"></div>
                         </div>
                     </template>
                     <template x-if="!selectedReport">
@@ -431,7 +447,12 @@
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1">PubMed 檢索關鍵字 (Query)</label>
                             <input type="text" x-model="config.pubmed_query" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none" />
-                            <p class="text-[11px] text-slate-400 mt-1">例如: galectin, galectin-3 cancer, galectin-9 immune</p>
+            <p class="text-[11px] text-slate-400 mt-1">例如: galectin（預設）、galectin-3 cancer</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">NCBI 聯絡 Email</label>
+                            <input type="email" x-model="config.email_for_ncbi" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                            <p class="text-[11px] text-slate-400 mt-1">NCBI 建議提供，用於 PubMed / Unpaywall</p>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1">每日處理文獻目標篇數</label>
@@ -453,7 +474,7 @@
                                     </template>
                                 </select>
                             </div>
-                            <p class="text-[11px] text-slate-400 mt-1">預設為每天早上 02:00 AM</p>
+                            <p class="text-[11px] text-slate-400 mt-1">預設每天 02:00（Asia/Taipei）。電腦需開機，Ollama 需在背景執行。</p>
                         </div>
                         <div class="flex items-center pt-6">
                             <label class="flex items-center gap-3 cursor-pointer">
@@ -637,6 +658,7 @@
                 paperSearch: '',
                 reports: [],
                 selectedReport: null,
+                reportLang: 'both',
                 renderedMarkdown: '',
                 logs: [],
                 ollamaModels: [],
@@ -720,7 +742,19 @@
 
                 async triggerRun() {
                     try {
-                        const res = await fetch('/api/run', { method: 'POST' });
+                        await fetch('/api/config', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.config)
+                        });
+                        const res = await fetch('/api/run', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                custom_query: this.config.pubmed_query,
+                                max_papers: this.config.max_papers_per_run
+                            })
+                        });
                         const data = await res.json();
                         if (data.success) {
                             this.showToast('已啟動文獻搜尋與分析！');

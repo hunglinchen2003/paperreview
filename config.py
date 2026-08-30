@@ -21,12 +21,13 @@ class AppConfig(BaseModel):
     
     # Ollama Settings
     ollama_base_url: str = "http://localhost:11434"
-    ollama_model: str = "llama3"
-    report_language: str = "zh-TW"  # zh-TW, zh-CN, en
+    ollama_model: str = "gpt-oss:20b"
+    report_language: str = "bilingual"
+    timezone: str = "Asia/Taipei"
     system_prompt: str = (
-        "你是一位專精於生醫分子生物學與腫瘤免疫學的資深研究員。"
-        "請根據提供的最新文獻全文/摘要，深入分析研究動態，總結關鍵機轉、實驗設計、重要發現與臨床應用潛力，"
-        "並撰寫一份結構完整、客觀且具深度專業性的綜述報告。"
+        "You are a senior biomedical researcher specializing in molecular biology and galectin biology. "
+        "Analyze the provided full text or abstract carefully. Write both Traditional Chinese and English. "
+        "Never invent PubMed IDs, journals, or publication dates."
     )
     
     # GitHub Pages Settings

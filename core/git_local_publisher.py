@@ -55,10 +55,13 @@ class LocalGitPublisher:
                 "needs_remote": True
             }
 
-        # Push to origin
-        push_res = self.run_git_cmd(["push", "-u", "origin", "main"])
+        branch_res = self.run_git_cmd(["rev-parse", "--abbrev-ref", "HEAD"])
+        branch = branch_res["stdout"] if branch_res["success"] and branch_res["stdout"] else "main"
+
+        push_res = self.run_git_cmd(["push", "-u", "origin", branch])
         if not push_res["success"]:
-            # Try master if main failed
+            push_res = self.run_git_cmd(["push", "-u", "origin", "main"])
+        if not push_res["success"]:
             push_res = self.run_git_cmd(["push", "-u", "origin", "master"])
 
         if push_res["success"]:

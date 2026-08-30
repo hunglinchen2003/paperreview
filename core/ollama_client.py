@@ -1,18 +1,24 @@
-import json
+import re
 import requests
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
+
+THINK_RE = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
+
+
 class OllamaClient:
-    def __init__(self, base_url: str = "http://localhost:11434", model: str = "llama3", language: str = "zh-TW"):
+    def __init__(
+        self,
+        base_url: str = "http://localhost:11434",
+        model: str = "gpt-oss:20b",
+        language: str = "bilingual",
+    ):
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.language = language
 
     def check_connection(self) -> Dict[str, Any]:
-        """
-        Check if Ollama is accessible and list installed models.
-        """
         try:
             resp = requests.get(f"{self.base_url}/api/tags", timeout=5)
             if resp.status_code == 200:
@@ -22,131 +28,230 @@ class OllamaClient:
                     "connected": True,
                     "models": models,
                     "current_model": self.model,
-                    "model_available": any(self.model in m or m.startswith(self.model) for m in models)
+                    "model_available": any(
+                        self.model == m or m.startswith(self.model) or self.model.startswith(m.split(":")[0])
+                        for m in models
+                    ),
                 }
             return {"connected": False, "error": f"Status code {resp.status_code}", "models": []}
         except Exception as e:
             return {"connected": False, "error": str(e), "models": []}
 
-    def generate(self, prompt: str, system: Optional[str] = None, timeout: int = 300) -> str:
+    def _num_ctx(self) -> int:
+        name = (self.model or "").lower()
+        if "gpt-oss" in name or "20b" in name:
+            return 16384
+        return 8192
+
+    def _clean_output(self, text: str) -> str:
+        if not text:
+            return ""
+        text = THINK_RE.sub("", text)
+        text = re.sub(r"<think>.*", "", text, flags=re.DOTALL | re.IGNORECASE)
+        return text.strip()
+
+    def generate(self, prompt: str, system: Optional[str] = None, timeout: int = 720) -> str:
         """
-        Call Ollama generate API.
+        Call Ollama. Prefer /api/chat (required for gpt-oss thinking models),
+        then fall back to /api/generate.
         """
-        url = f"{self.base_url}/api/generate"
+        options = {
+            "temperature": 0.3,
+            "top_p": 0.9,
+            "num_ctx": self._num_ctx(),
+        }
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+
+        try:
+            resp = requests.post(
+                f"{self.base_url}/api/chat",
+                json={
+                    "model": self.model,
+                    "messages": messages,
+                    "stream": False,
+                    "keep_alive": "30m",
+                    "options": options,
+                },
+                timeout=timeout,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            message = data.get("message") or {}
+            content = message.get("content") or data.get("response") or ""
+            cleaned = self._clean_output(content)
+            if cleaned:
+                return cleaned
+            # Some gpt-oss builds put the answer only in thinking
+            thinking = self._clean_output(message.get("thinking") or "")
+            if thinking:
+                return thinking
+        except requests.exceptions.ConnectionError:
+            raise RuntimeError(
+                f"無法連線至 Ollama ({self.base_url})，請確認 Ollama 服務是否已啟動 (ollama serve)。"
+            )
+        except Exception as chat_err:
+            print(f"[Ollama] /api/chat failed, trying /api/generate: {chat_err}")
+
         payload = {
             "model": self.model,
             "prompt": prompt,
             "stream": False,
-            "options": {
-                "temperature": 0.3,
-                "top_p": 0.9,
-                "num_ctx": 8192
-            }
+            "keep_alive": "30m",
+            "options": options,
         }
         if system:
             payload["system"] = system
-
         try:
-            resp = requests.post(url, json=payload, timeout=timeout)
+            resp = requests.post(f"{self.base_url}/api/generate", json=payload, timeout=timeout)
             resp.raise_for_status()
             data = resp.json()
-            return data.get("response", "").strip()
+            return self._clean_output(data.get("response") or "")
         except requests.exceptions.ConnectionError:
-            raise RuntimeError(f"無法連線至 Ollama ({self.base_url})，請確認 Ollama 服務是否已啟動 (ollama serve)。")
+            raise RuntimeError(
+                f"無法連線至 Ollama ({self.base_url})，請確認 Ollama 服務是否已啟動 (ollama serve)。"
+            )
         except Exception as e:
             raise RuntimeError(f"Ollama 生成失敗: {e}")
 
-    def analyze_single_paper(self, paper: Dict[str, Any], full_text: Optional[str] = None, system_prompt: Optional[str] = None) -> str:
-        """
-        Generate deep analysis for a single paper.
-        """
+    def analyze_single_paper(
+        self,
+        paper: Dict[str, Any],
+        full_text: Optional[str] = None,
+        system_prompt: Optional[str] = None,
+        query_keyword: str = "galectin",
+    ) -> str:
         title = paper.get("title", "Untitled")
         authors = paper.get("authors", "Unknown")
         journal = paper.get("journal", "Unknown")
         pub_date = paper.get("pub_date", "Unknown")
         pmid = paper.get("pmid", "")
-        doi = paper.get("doi", "")
+        doi = paper.get("doi") or "N/A"
         abstract = paper.get("abstract", "")
-
-        content_source = "PDF 全文 (節錄)" if full_text else "PubMed 論文摘要 (Abstract)"
+        source = paper.get("full_text_source") or ("pdf" if full_text else "abstract")
+        content_source = {
+            "pdf": "PDF full text (excerpt)",
+            "pmc_xml": "PMC / Europe PMC full text XML",
+            "jats": "PMC / Europe PMC full text XML",
+        }.get(source, "PubMed abstract")
         content_body = full_text if full_text else abstract
 
-        lang_instruction = "請使用繁體中文（台灣學術用語習慣）進行專業分析與撰寫。" if self.language == "zh-TW" else "請使用中文進行分析。"
+        prompt = f"""You are a biomedical literature analyst specializing in {query_keyword}.
 
-        prompt = f"""
-你是一位分子醫學與腫瘤生物學的專業文獻評析專家。
-{lang_instruction}
+Paper metadata (cite these exactly; do not invent identifiers):
+- Title: {title}
+- Journal: {journal}
+- Publication date: {pub_date}
+- Authors: {authors}
+- PMID: {pmid} (https://pubmed.ncbi.nlm.nih.gov/{pmid}/)
+- DOI: {doi}
+- Content source: {content_source}
 
-以下是一篇關於 Galectin（半乳糖凝集素）的最新研究文獻資料：
-
-- **標題 (Title)**: {title}
-- **期刊 (Journal)**: {journal} ({pub_date})
-- **作者 (Authors)**: {authors}
-- **PMID**: {pmid} | **DOI**: {doi or 'N/A'}
-- **內容來源**: {content_source}
-
-【文獻內容】：
+DOCUMENT:
 {content_body}
 
----
-請針對本篇論文進行結構化深度剖析，包含以下面向：
-1. **研究核心問題與背景**：作者試圖解決什麼科學問題？
-2. **涉及之 Galectin 亞型與標靶**：例如 Galectin-1, Galectin-3, Galectin-9 等，及其在細胞或組織中的表現/角色。
-3. **實驗設計與主要方法**：採用了哪些關鍵實驗（如細胞實驗、動物模型、臨床檢體、分子機制探討等）？
-4. **關鍵發現與分子機轉 (Mechanism)**：發現了哪些重要訊息路徑（Signaling pathways）或交互作用？
-5. **臨床轉化潛力與重要性**：此研究對診斷、標靶治療、免疫治療或抗藥性等帶來哪些啟示？
-6. **研究亮點與局限性**：此論文最重要的貢獻與未來待釐清之處。
+Write TWO sections, in this exact order:
 
-請直接以清晰的 Markdown 格式輸出該篇文獻的詳細分析報告。
+## 中文分析
+Use Traditional Chinese (Taiwan academic style). Cover:
+1. 研究問題與背景
+2. 與 {query_keyword} 的關聯（亞型／分子角色）
+3. 實驗設計與方法
+4. 關鍵發現與機轉
+5. 臨床或轉化意義
+6. 限制與亮點
+
+## English analysis
+The same six points in English (research question, relation to {query_keyword}, methods, key findings, translational relevance, limitations).
+
+Do not invent PMIDs, journals, or dates. Output Markdown only.
 """
         return self.generate(prompt, system=system_prompt)
 
-    def generate_comprehensive_report(self, papers: List[Dict[str, Any]], paper_analyses: List[str], 
-                                      query_keyword: str = "galectin", system_prompt: Optional[str] = None) -> str:
-        """
-        Generate cross-paper literature review synthesis report.
-        """
+    def generate_zh_digest(
+        self,
+        papers: List[Dict[str, Any]],
+        paper_analyses: List[str],
+        query_keyword: str,
+        system_prompt: Optional[str] = None,
+    ) -> str:
         today_str = datetime.now().strftime("%Y-%m-%d")
-        lang_instruction = "請使用繁體中文（台灣學術用語習慣）進行完整撰寫。" if self.language == "zh-TW" else "請使用中文撰寫。"
+        body = self._analysis_bundle(papers, paper_analyses)
+        prompt = f"""你是生醫綜述撰寫者。今天是 {today_str}，主題是「{query_keyword}」。
 
-        papers_summary_text = ""
-        for i, (p, analysis) in enumerate(zip(papers, paper_analyses), 1):
-            papers_summary_text += f"\n\n### 篇章 {i}: {p.get('title')}\n- **PMID**: {p.get('pmid')} | **期刊**: {p.get('journal')}\n{analysis}\n"
+以下是今日納入的文獻書目與各篇分析：
+{body}
 
-        prompt = f"""
-你是一位生醫領域的頂尖首席科學家與綜述報告撰寫專家。
-{lang_instruction}
+請用**繁體中文**撰寫今日綜述，結構如下（不要重複貼上書目表格，來源索引已另外附上）：
 
-今天是 {today_str}，我們追蹤了 PubMed 上關於【{query_keyword}】的最新 {len(papers)} 篇研究論文，並已完成各篇的初階分析：
+# 中文綜述 — {today_str}
 
-{papers_summary_text}
+## 執行摘要
+約 150–200 字。
 
----
-請整合以上所有文獻，撰寫一份**高水準、結構嚴謹且具前瞻性的【每日 Galectin 研究動態與文獻綜述日報 (Daily Galectin Literature Digest)】**。
+## 跨文獻重點與分子機轉
+## 臨床／轉化啟示
+## 未解問題與展望
+## 逐篇重點（每篇 5–8 行，標題用原文）
 
-報告架構需包含：
-# 📊 【Galectin 前沿研究動態每日綜述】 - {today_str}
-
-## 🎯 執行摘要 (Executive Summary)
-- 快速精煉今日文獻的核心焦點與重大突破（約 150-200 字）。
-
-## 🔬 本期追蹤文獻概覽
-- 條列今日納入分析的 {len(papers)} 篇文獻（附 PMID 與期刊）。
-
-## 🧬 跨文獻深度剖析與分子機轉總結 (Cross-Study Synthesis & Molecular Mechanisms)
-- 歸納今日文獻中探討之 Galectin 家族亞型（如 Gal-1/3/9 等）在不同疾病（如癌症、發炎、纖維化、免疫調節等）中的共性與特性。
-- 梳理關鍵上下游分子訊號路徑與生化機制（包含與 Glycan 配體、細胞受體或免疫檢查點之交互作用）。
-
-## 💡 臨床轉化、診斷與治療啟示 (Translational & Therapeutic Implications)
-- 評估在藥物開發（如抑制劑、單株抗體、PROTAC）、生物標記（Biomarkers）及合併免疫療法上的潛力與挑戰。
-
-## 🔭 未來研究展望與關鍵未解問題 (Future Perspectives & Open Questions)
-- 綜合今日文獻提出後續值得深入探討的研究方向與實驗建議。
-
-## 📑 逐篇文獻深度解讀 (Individual Paper Breakdown)
-（此處請納入並潤飾前述各篇文獻的詳細分析）
-
----
-請以高品質 Markdown 格式輸出，排版美觀、層次分明、專業嚴謹。
+語氣專業、客觀。不要杜撰 PMID、期刊或日期。
 """
         return self.generate(prompt, system=system_prompt)
+
+    def generate_en_digest(
+        self,
+        papers: List[Dict[str, Any]],
+        paper_analyses: List[str],
+        query_keyword: str,
+        system_prompt: Optional[str] = None,
+    ) -> str:
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        body = self._analysis_bundle(papers, paper_analyses)
+        prompt = f"""You are a biomedical review writer. Today is {today_str}. Topic: {query_keyword}.
+
+Papers and analyses:
+{body}
+
+Write an English daily digest with this structure (do NOT repeat the source table; it is provided separately):
+
+# English Digest — {today_str}
+
+## Executive summary
+About 150–200 words.
+
+## Cross-paper synthesis and mechanisms
+## Translational and clinical implications
+## Open questions
+## Per-paper highlights (5–8 lines each, keep original titles)
+
+Be precise. Do not invent PMIDs, journals, or dates.
+"""
+        return self.generate(prompt, system=system_prompt)
+
+    def generate_comprehensive_report(
+        self,
+        papers: List[Dict[str, Any]],
+        paper_analyses: List[str],
+        query_keyword: str = "galectin",
+        system_prompt: Optional[str] = None,
+    ) -> str:
+        """Backward-compatible wrapper: bilingual digest concatenated."""
+        zh = self.generate_zh_digest(papers, paper_analyses, query_keyword, system_prompt)
+        en = self.generate_en_digest(papers, paper_analyses, query_keyword, system_prompt)
+        return zh + "\n\n---\n\n" + en
+
+    def _analysis_bundle(self, papers: List[Dict[str, Any]], paper_analyses: List[str]) -> str:
+        chunks = []
+        for i, (p, analysis) in enumerate(zip(papers, paper_analyses), 1):
+            pmid = p.get("pmid")
+            chunks.append(
+                f"### Paper {i}\n"
+                f"- Title: {p.get('title')}\n"
+                f"- Journal: {p.get('journal')} | Date: {p.get('pub_date')}\n"
+                f"- PMID: {pmid} | https://pubmed.ncbi.nlm.nih.gov/{pmid}/\n"
+                f"- DOI: {p.get('doi') or 'N/A'}\n"
+                f"{analysis}\n"
+            )
+        return "\n".join(chunks)

@@ -63,11 +63,9 @@
 - **作業系統**：Windows 10/11, macOS 或 Linux
 - **Python**：3.9 以上
 - **Ollama**：本機已安裝並啟動 Ollama（[官網下載](https://ollama.com/)）
+  - 拉取模型（本系統預設）：
   ```bash
-  # 拉取推薦模型（可任選一款）
-  ollama pull llama3
-  # 或
-  ollama pull qwen2.5
+  ollama pull gpt-oss:20b
   ```
 
 ### 2. 安裝依賴
@@ -99,8 +97,8 @@ pip install -r requirements.txt
 
 ### 2. Ollama 模型設定
 - **Ollama API 位址**：預設 `http://localhost:11434`。
-- **選擇模型**：點擊「測試連線與載入可用模型」即可自動抓取本機已安裝的 Ollama 模型（如 `llama3`, `qwen2.5:14b`, `deepseek-r1`）。
-- **語言**：預設為繁體中文學術用語。
+- **選擇模型**：點擊「測試連線與載入可用模型」即可自動抓取本機已安裝的 Ollama 模型。預設為 `gpt-oss:20b`。
+- **語言**：每份報告同時產出**繁體中文**與 **English**，並可在頁面切換。期刊、發表日期、PubMed ID 連結由 PubMed 欄位寫入，不會被模型編造。
 
 ### 3. GitHub Pages 自動發布設定 (選填)
 若想讓報告自動發布至公開或私人 GitHub 網頁：

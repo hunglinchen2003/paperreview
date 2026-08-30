@@ -67,10 +67,6 @@ class GitHubPublisher:
             return {"success": False, "error": f"連線異常: {e}"}
 
     def convert_markdown_to_html(self, markdown_content: str, title: str, date_str: str) -> str:
-        """
-        Convert markdown report to a beautifully styled standalone HTML document.
-        """
-        # Convert MD to HTML with tables, code blocks, fenced_code, etc.
         body_html = markdown.markdown(
             markdown_content,
             extensions=["extra", "codehilite", "toc", "tables", "nl2br"]
@@ -81,8 +77,7 @@ class GitHubPublisher:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title} | Galectin 文獻綜述</title>
-    <!-- Tailwind CSS -->
+    <title>{title} | Literature Digest</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -93,20 +88,32 @@ class GitHubPublisher:
         .prose ul {{ list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; color: #334155; }}
         .prose ol {{ list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1rem; color: #334155; }}
         .prose li {{ margin-bottom: 0.5rem; }}
+        .prose table {{ width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.9rem; }}
+        .prose th {{ background: #f0fdfa; text-align: left; padding: 0.55rem 0.7rem; border: 1px solid #cbd5e1; }}
+        .prose td {{ padding: 0.55rem 0.7rem; border: 1px solid #e2e8f0; vertical-align: top; }}
+        .prose a {{ color: #0f766e; text-decoration: underline; }}
         .prose blockquote {{ border-left: 4px solid #0d9488; padding-left: 1rem; color: #475569; font-style: italic; margin: 1rem 0; }}
         .prose hr {{ margin: 2rem 0; border-color: #cbd5e1; }}
         .prose strong {{ color: #0f172a; font-weight: 600; }}
         .prose code {{ background-color: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; color: #0f766e; }}
+        .lang-btn.active {{ background: #0f766e; color: #fff; }}
+        body.lang-zh .report-lang[data-lang="en"] {{ display: none; }}
+        body.lang-en .report-lang[data-lang="zh"] {{ display: none; }}
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans lang-both">
     <nav class="bg-teal-800 text-white shadow-md sticky top-0 z-50">
-        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
             <a href="../index.html" class="flex items-center space-x-2 text-teal-100 hover:text-white font-medium transition">
                 <i class="fa-solid fa-arrow-left"></i>
-                <span>返回總覽清單</span>
+                <span>返回總覽 / Index</span>
             </a>
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center gap-2">
+                <div class="bg-teal-950/70 rounded-lg p-0.5 flex text-xs font-semibold">
+                    <button type="button" class="lang-btn px-2.5 py-1 rounded-md" data-set="both" onclick="setLang('both')">中英</button>
+                    <button type="button" class="lang-btn px-2.5 py-1 rounded-md" data-set="zh" onclick="setLang('zh')">中文</button>
+                    <button type="button" class="lang-btn px-2.5 py-1 rounded-md" data-set="en" onclick="setLang('en')">EN</button>
+                </div>
                 <span class="bg-teal-900/80 px-3 py-1 rounded-full text-xs font-mono text-teal-200">
                     <i class="fa-regular fa-calendar-days mr-1"></i> {date_str}
                 </span>
@@ -120,12 +127,21 @@ class GitHubPublisher:
                 {body_html}
             </div>
         </div>
-        
         <footer class="text-center text-slate-400 text-sm py-6">
-            <p>🤖 由 PubMed 智能追蹤機器人與 Ollama 本地模型自動生成</p>
-            <p class="mt-1 text-xs">報告產生時間：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>由 PubMed 檢索、開放全文擷取與本機 Ollama 自動生成 · 來源欄位來自 NCBI 紀錄</p>
+            <p class="mt-1 text-xs">Generated {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} (Asia/Taipei)</p>
         </footer>
     </main>
+    <script>
+        function setLang(mode) {{
+            document.body.classList.remove('lang-both', 'lang-zh', 'lang-en');
+            document.body.classList.add('lang-' + mode);
+            document.querySelectorAll('.lang-btn').forEach(btn => {{
+                btn.classList.toggle('active', btn.getAttribute('data-set') === mode);
+            }});
+        }}
+        setLang('both');
+    </script>
 </body>
 </html>
 """
@@ -136,7 +152,16 @@ class GitHubPublisher:
         Generate the master index.html for GitHub Pages listing all past reports.
         """
         cards_html = ""
+        seen_dates = set()
+        unique_reports = []
         for rep in reports:
+            date_str = rep.get("date_str", "Unknown Date")
+            if date_str in seen_dates:
+                continue
+            seen_dates.add(date_str)
+            unique_reports.append(rep)
+
+        for rep in unique_reports:
             rep_id = rep.get("id")
             date_str = rep.get("date_str", "Unknown Date")
             title = rep.get("title", f"Galectin 文獻日報 - {date_str}")
@@ -190,14 +215,17 @@ class GitHubPublisher:
                     <div class="inline-flex items-center gap-2 bg-teal-900/60 px-3 py-1 rounded-full text-xs font-semibold tracking-wide text-teal-200 mb-3 border border-teal-500/30">
                         <i class="fa-solid fa-dna animate-spin text-teal-300" style="animation-duration: 8s;"></i> 生醫文獻自動化追蹤系統
                     </div>
-                    <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">Galectin 研究動態綜述日報</h1>
+                    <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">文獻綜述日報 / Literature Digest</h1>
                     <p class="mt-2 text-teal-100 text-sm md:text-base max-w-2xl">
-                        每日定時自 PubMed 檢索最新 Galectin（半乳糖凝集素）相關文獻，自動下載全文與解析，並由本地 Ollama 深度模型撰寫之專業前沿研究綜述。
+                        Daily PubMed harvest (default topic: galectin), open-access full text when available, local Ollama analysis, bilingual reports with journal, date, and PMID links.
                     </p>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="papers.html" class="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg text-sm font-semibold text-white border border-white/20">文獻庫 / Papers</a>
+                    </div>
                 </div>
                 <div class="flex items-center gap-3 bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20">
                     <div class="text-center px-4">
-                        <div class="text-2xl font-bold text-white">{len(reports)}</div>
+                        <div class="text-2xl font-bold text-white">{len(unique_reports)}</div>
                         <div class="text-xs text-teal-200 mt-0.5">累計綜述</div>
                     </div>
                 </div>
@@ -214,7 +242,7 @@ class GitHubPublisher:
                        class="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500" />
             </div>
             <div class="text-sm text-slate-500 self-end sm:self-auto font-medium">
-                顯示共 <span id="reportCount" class="font-bold text-teal-700">{len(reports)}</span> 份報告
+                顯示共 <span id="reportCount" class="font-bold text-teal-700">{len(unique_reports)}</span> 份報告
             </div>
         </div>
 
@@ -223,7 +251,7 @@ class GitHubPublisher:
         </div>
         
         <footer class="text-center text-slate-400 text-sm py-12 mt-8 border-t border-slate-200">
-            <p>🤖 自動化維護於 GitHub Pages • 由 PubMed & Ollama LLM 驅動</p>
+            <p>GitHub Pages · PubMed · local Ollama · bilingual ZH/EN · PMID-linked sources</p>
         </footer>
     </main>
 
@@ -255,7 +283,7 @@ class GitHubPublisher:
 """
         return index_template
 
-    def save_local_report_files(self, date_str: str, title: str, markdown_content: str, all_reports: List[Dict[str, Any]]) -> str:
+    def save_local_report_files(self, date_str: str, title: str, markdown_content: str, all_reports: List[Dict[str, Any]], query_keyword: str = "galectin") -> str:
         """
         Save static HTML, MD, and master index.html into local docs/ directory.
         Returns local path of the generated HTML report.
@@ -279,12 +307,8 @@ class GitHubPublisher:
 
         return str(html_file)
 
-    def publish_to_github(self, date_str: str, title: str, markdown_content: str, all_reports: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """
-        Upload the report markdown, report HTML, and updated index.html to GitHub repository.
-        """
-        # 1. Save locally first
-        local_html = self.save_local_report_files(date_str, title, markdown_content, all_reports)
+    def publish_to_github(self, date_str: str, title: str, markdown_content: str, all_reports: List[Dict[str, Any]], query_keyword: str = "galectin") -> Dict[str, Any]:
+        local_html = self.save_local_report_files(date_str, title, markdown_content, all_reports, query_keyword=query_keyword)
 
         if not self.is_configured:
             return {
